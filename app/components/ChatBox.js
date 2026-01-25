@@ -8,7 +8,13 @@ const CURATED_EMOJIS = ["❤️", "✨", "😂", "😍", "🔥", "🙌", "🥂",
 
 export default function ChatBox({ chatData, currentUser, onClose }) {
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`chat_messages_${chatData.roomId}`);
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
   const [isPartnerTyping, setIsPartnerTyping] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [partnerDetails, setPartnerDetails] = useState({ name: chatData.partnerName, left: false });
@@ -16,6 +22,13 @@ export default function ChatBox({ chatData, currentUser, onClose }) {
   const [copiedId, setCopiedId] = useState(null);
   const scrollRef = useRef();
   const typingTimeoutRef = useRef(null);
+
+  // --- SAVE MESSAGES TO LOCALSTORAGE ---
+  useEffect(() => {
+    if (chatData.roomId) {
+      localStorage.setItem(`chat_messages_${chatData.roomId}`, JSON.stringify(messages));
+    }
+  }, [messages, chatData.roomId]);
 
   // --- SOCKET LISTENERS ---
   useEffect(() => {
@@ -134,6 +147,7 @@ export default function ChatBox({ chatData, currentUser, onClose }) {
 
   const handleClose = () => {
     socket.emit('end-chat', { roomId: chatData.roomId, senderName: currentUser });
+    localStorage.removeItem(`chat_messages_${chatData.roomId}`);
     onClose();
   };
 

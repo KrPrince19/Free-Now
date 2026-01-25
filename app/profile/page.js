@@ -28,7 +28,13 @@ export default function ProfilePage() {
   // --- 3. LOCAL STATE ---
   const [stats, setStats] = useState({ totalRequests: 0, matchesMade: 0 });
   const [incomingRequest, setIncomingRequest] = useState(null);
-  const [activeChat, setActiveChat] = useState(null);
+  const [activeChat, setActiveChat] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('activeChat');
+      return saved ? JSON.parse(saved) : null;
+    }
+    return null;
+  });
   const [history, setHistory] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
@@ -50,7 +56,7 @@ export default function ProfilePage() {
     const syncUser = async () => {
       if (isLoaded && user && sessionId) {
         try {
-          await fetch('http://localhost:5000/api/sync-user', {
+          await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/sync-user`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -77,8 +83,8 @@ export default function ProfilePage() {
         setIsRefreshing(true);
         try {
           const [statsRes, historyRes] = await Promise.all([
-            fetch(`http://localhost:5000/api/user-stats/${userEmail}`),
-            fetch(`http://localhost:5000/api/history/${userEmail}`)
+            fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user-stats/${userEmail}`),
+            fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/history/${userEmail}`)
           ]);
           setStats(await statsRes.json());
           setHistory(await historyRes.json());
@@ -97,11 +103,13 @@ export default function ProfilePage() {
       socket.on('chat-started', (data) => {
         setShowConnectionAnimation(true);
         setActiveChat(data);
+        localStorage.setItem('activeChat', JSON.stringify(data));
         setTimeout(() => setShowConnectionAnimation(false), 2500);
       });
       socket.on('chat-init-receiver', (data) => {
         setShowConnectionAnimation(true);
         setActiveChat(data);
+        localStorage.setItem('activeChat', JSON.stringify(data));
         setTimeout(() => setShowConnectionAnimation(false), 2500);
       });
 
@@ -140,7 +148,7 @@ export default function ProfilePage() {
     </div>
   );
 
-  const visibleHistory = showAllHistory ? history : history.slice(0, 3);
+  const visibleHistory = (Array.isArray(history) && showAllHistory) ? history : (Array.isArray(history) ? history.slice(0, 3) : []);
 
   return (
     <div className={`min-h-screen font-sans pb-20 overflow-x-hidden transition-colors duration-500 selection:bg-indigo-500/30 ${isDarkMode ? 'bg-[#0a0a0c] text-white' : 'bg-rose-50/30 text-slate-800'}`}>
@@ -213,7 +221,10 @@ export default function ProfilePage() {
         )}
       </AnimatePresence>
 
-      {activeChat && <ChatBox chatData={activeChat} currentUser={user.firstName} onClose={() => setActiveChat(null)} />}
+      {activeChat && <ChatBox chatData={activeChat} currentUser={user.firstName} onClose={() => {
+        setActiveChat(null);
+        localStorage.removeItem('activeChat');
+      }} />}
 
       <main className="max-w-2xl mx-auto p-6 pt-12 relative z-10">
         <div className="flex justify-between items-center mb-10">
@@ -351,7 +362,7 @@ export default function ProfilePage() {
             <div className="space-y-6 relative">
               {(history.length > 0) && <div className={`absolute left-[23px] top-2 bottom-6 w-[1px] ${isDarkMode ? 'bg-white/[0.05]' : 'bg-slate-100'}`} />}
 
-              {history.length > 0 ? (
+              {Array.isArray(history) && history.length > 0 ? (
                 <>
                   {visibleHistory.map((log, i) => {
                     let partnerDisplayName = "Explorer";

@@ -138,14 +138,14 @@ export default function LandingPage() {
     const fetchData = async () => {
       try {
         const statsRes = await fetch(
-          "http://localhost:5000/api/global-stats/monthly"
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/global-stats/monthly`
         );
         const statsData = await statsRes.json();
         const countValue = Number(statsData.count);
         setMonthlyStats(isNaN(countValue) ? 0 : countValue);
 
         const recordRes = await fetch(
-          "http://localhost:5000/api/stats/longest-yesterday"
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/stats/longest-yesterday`
         );
         const recordData = await recordRes.json();
 
@@ -159,7 +159,7 @@ export default function LandingPage() {
         }
 
         const activeRes = await fetch(
-          "http://localhost:5000/api/active-conversations"
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/active-conversations`
         );
         const activeData = await activeRes.json();
         setLiveChats(activeData || []);
@@ -177,33 +177,33 @@ export default function LandingPage() {
     socket.connect();
 
     socket.on('midnight-update', (data) => {
-      fetch('http://localhost:5000/api/global-stats/monthly')
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/global-stats/monthly`)
         .then(res => res.json())
         .then(statsData => setMonthlyStats(Number(statsData.count) || 0));
 
-      fetch('http://localhost:5000/api/stats/longest-yesterday')
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/stats/longest-yesterday`)
         .then(res => res.json())
         .then(recordData => { if (recordData?.names) setYesterdayRecord(recordData); });
 
-      fetch('http://localhost:5000/api/active-conversations')
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/active-conversations`)
         .then(res => res.json())
         .then(activeData => setLiveChats(activeData || []));
     });
 
     socket.on('month-reset', (data) => {
-      fetch('http://localhost:5000/api/global-stats/monthly')
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/global-stats/monthly`)
         .then(res => res.json())
         .then(statsData => setMonthlyStats(Number(statsData.count) || 0));
     });
 
     socket.on('conversation-started', (data) => {
-      fetch('http://localhost:5000/api/active-conversations')
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/active-conversations`)
         .then(res => res.json())
         .then(activeData => setLiveChats(activeData || []));
     });
 
     socket.on('conversation-ended', (data) => {
-      fetch('http://localhost:5000/api/active-conversations')
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/active-conversations`)
         .then(res => res.json())
         .then(activeData => setLiveChats(activeData || []));
     });

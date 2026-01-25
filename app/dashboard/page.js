@@ -58,8 +58,8 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         const [usersRes, statsRes] = await Promise.all([
-          fetch('http://localhost:5000/api/activeusers'),
-          fetch('http://localhost:5000/api/global-stats/monthly')
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/activeusers`),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/global-stats/monthly`)
         ]);
         setNearbyUsers(await usersRes.json());
         const statsData = await statsRes.json();
@@ -89,7 +89,7 @@ export default function Dashboard() {
       setShowConnectionAnimation(true);
       setActiveChat(data);
       localStorage.setItem('activeChat', JSON.stringify(data));
-      fetch('http://localhost:5000/api/global-stats/monthly').then(res => res.json()).then(d => setMonthlyMatches(d.count || 0));
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/global-stats/monthly`).then(res => res.json()).then(d => setMonthlyMatches(d.count || 0));
       setTimeout(() => setShowConnectionAnimation(false), 2500);
     });
     socket.on('chat-init-receiver', (data) => {
