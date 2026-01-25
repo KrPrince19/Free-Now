@@ -75,17 +75,43 @@ export default function Dashboard() {
       }
     };
 
+    // --- SYNC USER (Ensures user exists in DB for stats) ---
+    const syncUser = async () => {
+      if (sessionId && user) {
+        try {
+          await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/sync-user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId,
+              email: user.primaryEmailAddress?.emailAddress,
+              name: user.firstName ? `${user.firstName} ${user.lastName || ''}` : `Guest_${sessionId.slice(-4)}`
+            })
+          });
+        } catch (err) { console.error("Sync Error:", err); }
+      }
+    };
+    syncUser();
     fetchData();
+
     socket.connect();
 
-    if (sessionId) {
-      socket.emit('register-user', sessionId);
-    }
+    // --- SOCKET REGISTRATION ---
+    const handleRegister = () => {
+      if (sessionId) {
+        socket.emit('register-user', sessionId);
+        console.log("Registered user on dashboard:", sessionId);
+      }
+    };
+
+    if (socket.connected) handleRegister();
+    socket.on('connect', handleRegister);
 
     socket.on("users-update", (users) => setNearbyUsers(users));
     socket.on('receive-chat-request', (data) => { setIncomingRequest(data); setTimeLeft(15); });
     socket.on('request-expired', () => setIncomingRequest(null));
     socket.on('request-ignored', (data) => showToast(data.message, "timeout", false));
+    socket.on('request-failed', (data) => showToast(data.message, "reject", false));
     socket.on('request-rejected', (data) => showToast(data.message, "reject", true));
     socket.on('request-sent-success', () => showToast("Vibe check sent! ✨", "success", false));
     socket.on('chat-started', (data) => {
@@ -102,8 +128,11 @@ export default function Dashboard() {
       setTimeout(() => setShowConnectionAnimation(false), 2500);
     });
 
-    return () => { socket.off(); };
-  }, [sessionId]);
+    return () => {
+      socket.off('connect', handleRegister);
+      socket.off();
+    };
+  }, [sessionId, user]);
 
   useEffect(() => {
     if (incomingRequest && timeLeft > 0) {
@@ -116,10 +145,13 @@ export default function Dashboard() {
 
   const handleSayHi = (receiverId) => {
     if (!user) return showToast("Please sign in first!", "reject");
+    if (!sessionId) return showToast("Authenticating session...", "info");
 
     // Find the receiver user doc to get their name
     const receiver = nearbyUsers.find(u => u.id === receiverId);
     const receiverName = receiver ? receiver.name : "Explorer";
+
+    console.log(`Attempting to connect to ${receiverName} (${receiverId})`);
 
     const fullName = user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName;
     socket.emit('send-chat-request', {

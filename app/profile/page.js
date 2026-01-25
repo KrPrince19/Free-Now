@@ -77,7 +77,16 @@ export default function ProfilePage() {
 
     if (isLoaded && sessionId && userEmail) {
       socket.connect();
-      socket.emit('register-user', sessionId);
+
+      const handleRegister = () => {
+        if (sessionId) {
+          socket.emit('register-user', sessionId);
+          console.log("Registered user on profile:", sessionId);
+        }
+      };
+
+      if (socket.connected) handleRegister();
+      socket.on('connect', handleRegister);
 
       const fetchData = async () => {
         setIsRefreshing(true);
@@ -113,7 +122,10 @@ export default function ProfilePage() {
         setTimeout(() => setShowConnectionAnimation(false), 2500);
       });
 
-      return () => { socket.off(); };
+      return () => {
+        socket.off('connect', handleRegister);
+        socket.off();
+      };
     }
   }, [isLoaded, sessionId, activeChat, user]);
 
@@ -327,8 +339,8 @@ export default function ProfilePage() {
                 value={statusText}
                 onChange={(e) => setStatusText(e.target.value)}
                 disabled={isFree}
-                className={`w-full rounded-2xl px-6 py-5 text-lg outline-none transition-all placeholder:text-white/10 border ${isDarkMode ? 'bg-white/5 border-white/5 focus:border-indigo-500/50 focus:bg-white/[0.08] text-white' :
-                  'bg-slate-50 border-slate-100 focus:bg-white focus:ring-4 focus:ring-rose-100 text-slate-800'
+                className={`w-full rounded-2xl px-6 py-5 text-lg outline-none transition-all placeholder:text-white/20 border ${isDarkMode ? 'bg-white/10 border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.15] text-white' :
+                  'bg-rose-50/50 border-rose-100 focus:bg-white focus:ring-4 focus:ring-rose-100 text-slate-800'
                   } ${isFree ? 'opacity-40 cursor-not-allowed' : ''}`}
               />
               <Coffee className={`absolute right-6 top-5 transition-colors ${isFree ? 'text-indigo-400' : 'text-slate-300'}`} size={24} />
