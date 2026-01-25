@@ -165,7 +165,7 @@ export default function LandingPage() {
         setLiveChats(activeData || []);
       } catch (err) {
         console.error("Landing fetch error:", err);
-        setMonthlyStats(1420);
+        setMonthlyStats(0);
       }
     };
 

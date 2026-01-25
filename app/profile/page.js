@@ -129,7 +129,16 @@ export default function ProfilePage() {
   const handleAcceptRequest = () => {
     if (incomingRequest) {
       const tempRequestId = incomingRequest.senderId;
-      socket.emit('accept-chat', { senderId: tempRequestId, receiverId: sessionId });
+      const fullName = user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName;
+
+      socket.emit('accept-chat', {
+        senderId: tempRequestId,
+        senderName: incomingRequest.senderName,
+        receiverId: sessionId,
+        receiverName: fullName,
+        receiverVibe: statusText
+      });
+
       toggleStatus(false, statusText);
       setIncomingRequest(null);
     }
@@ -384,7 +393,7 @@ export default function ProfilePage() {
                         </div>
                         <div className="flex-1 py-1">
                           <p className={`font-bold text-base tracking-tight leading-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                            {log.type === 'CONVERSATION' ? `Connection with ${partnerDisplayName}` : log.detail}
+                            {log.detail || (log.type === 'CONVERSATION' ? `Connection with ${partnerDisplayName}` : 'Activity logged')}
                           </p>
                           <p className={`text-[10px] font-black uppercase mt-1 tracking-widest ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>
                             {new Date(log.timestamp).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}

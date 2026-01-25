@@ -10,6 +10,7 @@ import {
   Trophy, XCircle, CheckCircle2, Clock, Heart, Globe, Sun, Moon
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useStatus } from '../context/StatusContext';
 
 
 // --- COUNTER COMPONENT ---
@@ -28,6 +29,7 @@ function Counter({ value }) {
 export default function Dashboard() {
   const { user } = useUser();
   const { sessionId } = useAuth();
+  const { statusText } = useStatus();
   const [nearbyUsers, setNearbyUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,7 +63,8 @@ export default function Dashboard() {
           fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/activeusers`),
           fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/global-stats/monthly`)
         ]);
-        setNearbyUsers(await usersRes.json());
+        const usersData = await usersRes.json();
+        setNearbyUsers(Array.isArray(usersData) ? usersData : []);
         const statsData = await statsRes.json();
         setMonthlyMatches(statsData.count || 0);
         setError(null);
@@ -113,13 +116,29 @@ export default function Dashboard() {
 
   const handleSayHi = (receiverId) => {
     if (!user) return showToast("Please sign in first!", "reject");
+
+    // Find the receiver user doc to get their name
+    const receiver = nearbyUsers.find(u => u.id === receiverId);
+    const receiverName = receiver ? receiver.name : "Explorer";
+
     const fullName = user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName;
-    socket.emit('send-chat-request', { senderId: sessionId, senderName: fullName, receiverId });
+    socket.emit('send-chat-request', {
+      senderId: sessionId,
+      senderName: fullName,
+      receiverId,
+      receiverName: receiverName,
+      senderVibe: statusText || "free"
+    });
   };
 
   const handleAcceptRequest = () => {
     setIncomingRequest(null);
-    socket.emit('accept-chat', { senderId: incomingRequest.senderId, receiverId: sessionId, receiverName: user.firstName });
+    socket.emit('accept-chat', {
+      senderId: incomingRequest.senderId,
+      senderName: incomingRequest.senderName,
+      receiverId: sessionId,
+      receiverName: user.firstName
+    });
   };
 
   const handleIgnoreRequest = () => {
