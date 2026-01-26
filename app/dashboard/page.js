@@ -85,7 +85,7 @@ export default function Dashboard() {
             body: JSON.stringify({
               sessionId,
               email: user.primaryEmailAddress?.emailAddress,
-              name: user.firstName ? `${user.firstName} ${user.lastName || ''}` : `Guest_${sessionId.slice(-4)}`
+              name: user.username || user.firstName
             })
           });
         } catch (err) { console.error("Sync Error:", err); }
@@ -153,10 +153,9 @@ export default function Dashboard() {
 
     console.log(`Attempting to connect to ${receiverName} (${receiverId})`);
 
-    const fullName = user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName;
     socket.emit('send-chat-request', {
       senderId: sessionId,
-      senderName: fullName,
+      senderName: user.username || user.firstName,
       receiverId,
       receiverName: receiverName,
       senderVibe: statusText || "free"
@@ -169,7 +168,7 @@ export default function Dashboard() {
       senderId: incomingRequest.senderId,
       senderName: incomingRequest.senderName,
       receiverId: sessionId,
-      receiverName: user.firstName
+      receiverName: user.username || user.firstName
     });
   };
 
@@ -263,7 +262,7 @@ export default function Dashboard() {
       {activeChat && (
         <ChatBox
           chatData={activeChat}
-          currentUser={user?.firstName}
+          currentUser={user?.username || user?.firstName}
           onClose={() => {
             setActiveChat(null);
             localStorage.removeItem('activeChat');

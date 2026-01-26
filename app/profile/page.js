@@ -62,7 +62,7 @@ export default function ProfilePage() {
             body: JSON.stringify({
               sessionId,
               email: user.primaryEmailAddress?.emailAddress,
-              name: user.firstName ? `${user.firstName} ${user.lastName || ''}` : `Guest_${sessionId.slice(-4)}`
+              name: user.username || user.firstName
             })
           });
         } catch (err) { console.error("Sync Error:", err); }
@@ -147,7 +147,7 @@ export default function ProfilePage() {
         senderId: tempRequestId,
         senderName: incomingRequest.senderName,
         receiverId: sessionId,
-        receiverName: fullName,
+        receiverName: user.username || user.firstName,
         receiverVibe: statusText
       });
 
@@ -242,7 +242,7 @@ export default function ProfilePage() {
         )}
       </AnimatePresence>
 
-      {activeChat && <ChatBox chatData={activeChat} currentUser={user.firstName} onClose={() => {
+      {activeChat && <ChatBox chatData={activeChat} currentUser={user.username || user.firstName} onClose={() => {
         setActiveChat(null);
         localStorage.removeItem('activeChat');
       }} />}
@@ -296,7 +296,7 @@ export default function ProfilePage() {
             <div className={`absolute inset-0 blur-[40px] rounded-full scale-110 ${isDarkMode ? 'bg-indigo-500/20' : 'bg-rose-500/10'}`} />
             <motion.div whileHover={{ scale: 1.05, rotate: 2 }} className="relative w-32 h-32 bg-gradient-to-br from-indigo-500 via-purple-500 to-rose-500 p-[3px] rounded-[2.5rem] shadow-2xl cursor-pointer">
               <div className={`w-full h-full rounded-[2.35rem] flex items-center justify-center text-4xl font-black group/avatar overflow-hidden ${isDarkMode ? 'bg-[#0a0a0c] text-white' : 'bg-white text-slate-800'}`}>
-                {user?.firstName?.[0] || "?"}
+                {user?.username?.[0] || user?.firstName?.[0] || "?"}
                 <div className="absolute inset-0 bg-gradient-to-t from-indigo-500/20 to-transparent opacity-0 group-hover/avatar:opacity-100 transition-opacity" />
               </div>
             </motion.div>
@@ -304,8 +304,8 @@ export default function ProfilePage() {
               <div className={`w-1.5 h-1.5 rounded-full ${isFree ? 'bg-white animate-pulse' : 'bg-white/20'}`} />
             </div>
           </div>
-          <h1 className={`text-4xl font-black tracking-tight mb-2 relative z-10 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{user?.firstName} {user?.lastName}</h1>
-          <p className={`font-medium text-sm tracking-wide mb-6 relative z-10 ${isDarkMode ? 'text-white/40' : 'text-slate-400'}`}>{user?.primaryEmailAddress?.emailAddress}</p>
+          <h1 className={`text-4xl font-black tracking-tight mb-2 relative z-10 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{user?.username || user?.firstName}</h1>
+          <p className={`font-medium text-sm tracking-wide mb-6 relative z-10 ${isDarkMode ? 'text-white/40' : 'text-slate-400'}`}>@{user?.username || user?.firstName}</p>
 
           <div className="flex justify-center gap-3">
             <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-white/5 border-white/10 text-indigo-400' : 'bg-indigo-50 border-indigo-100 text-indigo-600'}`}>
