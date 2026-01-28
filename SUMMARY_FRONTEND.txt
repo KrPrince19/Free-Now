@@ -49,14 +49,21 @@ This file provides a comprehensive overview of how the FreeNow frontend applicat
 - **Mechanism**: Context API.
 - **How it works**: The app has a **ThemeContext** that wraps the entire project. When you toggle Dark Mode on the Profile page, the Landing page and Dashboard automatically "hear" this change and update their colors, background hearts, and shadows to match.
 
-### 4. Advanced Chat Actions
-- **Editing**: Uses Socket.io (`edit-message` / `message-updated`) for real-time synchronization. The frontend switches to "Edit Mode," populates the input, and broadcasts changes globally, adding an lowercase "• edited" badge for transparency.
-- **Deletion**: Implements a "placeholder" pattern via socket events. Instead of a hard delete, the message content is replaced with "This message was deleted" and styled with italics/gray colors, preserving the conversation flow for both users.
-- **Copying**: Built-in clipboard integration (`navigator.clipboard`) with a 2-second visual confirmation state (swapping the copy icon for a green checkmark) for a smooth user experience.
+### 5. Snapshot Ephemeral Media (True Privacy)
+- **Mechanism**: Auto-Destructing Payload.
+- **How it works**: In the ChatBox, users can send images as "Snapshots". These images are only revealed when the recipient clicks them. Once opened, a **10-second timer** starts. When it hits zero, the image is permanently wiped from the chat state, ensuring sensitive media never sticks around.
 
-### 5. Typewriter Effect
-- **Mechanism**: Timed String Manipulation.
-- **How it works**: In the Hero section, a custom script cycles through romantic and "lovable" sentences, typing them out character by character to create a welcoming, poetic vibe.
+### 6. Vibe-Based Discovery
+- **Mechanism**: Real-time Client Filtering.
+- **How it works**: The Dashboard now includes a "Vibe Bar". Users can instantly filter the list of online people by their vibe category (Chill, Deep, Chaotic, etc.), making it easier to find meaningful connections.
+
+### 7. High-Performance Sonar Map (Visibility Fix)
+- **Mechanism**: Multi-Source State Merging.
+- **How it works**: The previous multi-theme globe map was simplified into a single, high-performance **Sonar Radar**. Crucially, it was fixed to show **EVERYONE** online (both individual "Free" users and matched pairs), providing a 100% accurate visual representation of the community's real-time energy.
+
+### 6. Dynamic HSL Backgrounds (Global Vibe Pulse)
+- **Mechanism**: Global CSS Variable (`--vibe-hue`) driven by `ThemeContext`.
+- **How it works**: The app automatically monitors the number of active users. When the network is quiet, the backgrounds shift to a calm **Indigo** hue (240°). As more people connect and the "vibe" increases, the entire app's background accents smoothly transition towards a vibrant **Rose** hue (340°), reflecting the energy of the community in real-time.
 
 ---
 

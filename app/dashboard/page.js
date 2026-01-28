@@ -31,6 +31,7 @@ export default function Dashboard() {
   const { sessionId } = useAuth();
   const { statusText } = useStatus();
   const [nearbyUsers, setNearbyUsers] = useState([]);
+  const [filterTag, setFilterTag] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -48,7 +49,7 @@ export default function Dashboard() {
   const [timeLeft, setTimeLeft] = useState(15);
   const [statusToast, setStatusToast] = useState(null);
   const [showConnectionAnimation, setShowConnectionAnimation] = useState(false);
-  const { isDarkMode } = useTheme();
+  const { isDarkMode, updateVibeHue } = useTheme();
 
   const showToast = (msg, type = "info", isHeartbreak = false) => {
     setStatusToast({ msg, type, isHeartbreak });
@@ -107,7 +108,10 @@ export default function Dashboard() {
     if (socket.connected) handleRegister();
     socket.on('connect', handleRegister);
 
-    socket.on("users-update", (users) => setNearbyUsers(users));
+    socket.on("users-update", (users) => {
+      setNearbyUsers(users);
+      updateVibeHue(users.length);
+    });
     socket.on('receive-chat-request', (data) => { setIncomingRequest(data); setTimeLeft(15); });
     socket.on('request-expired', () => setIncomingRequest(null));
     socket.on('request-ignored', (data) => showToast(data.message, "timeout", false));
@@ -130,7 +134,15 @@ export default function Dashboard() {
 
     return () => {
       socket.off('connect', handleRegister);
-      socket.off();
+      socket.off('users-update');
+      socket.off('receive-chat-request');
+      socket.off('request-expired');
+      socket.off('request-ignored');
+      socket.off('request-failed');
+      socket.off('request-rejected');
+      socket.off('request-sent-success');
+      socket.off('chat-started');
+      socket.off('chat-init-receiver');
     };
   }, [sessionId, user]);
 
@@ -177,7 +189,13 @@ export default function Dashboard() {
     setIncomingRequest(null);
   };
 
-  const filteredUsers = nearbyUsers.filter((u) => u.id !== sessionId);
+  const VIBE_TAGS = ["All", "Chill", "Deep", "Music", "Gaming", "Tea", "Coffee"];
+
+  const filteredUsers = nearbyUsers.filter((u) => {
+    if (u.id === sessionId) return false;
+    if (filterTag === "All") return true;
+    return u.status?.toLowerCase().includes(filterTag.toLowerCase());
+  });
 
   if (loading) return (
     <div className={`h-screen flex flex-col items-center justify-center transition-colors ${isDarkMode ? 'bg-[#0a0a0c]' : 'bg-rose-50/20'}`}>
@@ -192,8 +210,14 @@ export default function Dashboard() {
 
 
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className={`absolute top-[-10%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-colors duration-1000 ${isDarkMode ? 'bg-indigo-600/10' : 'bg-indigo-600/5'}`} />
-        <div className={`absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-colors duration-1000 ${isDarkMode ? 'bg-rose-600/10' : 'bg-rose-600/5'}`} />
+        <div
+          style={{ backgroundColor: `hsla(var(--vibe-hue), 60%, 50%, ${isDarkMode ? '0.1' : '0.05'})` }}
+          className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000"
+        />
+        <div
+          style={{ backgroundColor: `hsla(var(--vibe-hue), 60%, 50%, ${isDarkMode ? '0.1' : '0.05'})` }}
+          className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000"
+        />
       </div>
 
 
@@ -289,8 +313,24 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-8">
             <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>People Active Now</h3>
             <span className={`flex items-center gap-2 text-[10px] font-black px-4 py-2 rounded-full border transition-all ${isDarkMode ? 'bg-white/5 border-white/5 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-600'}`}>
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> {filteredUsers.length} Online Syncs
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> {nearbyUsers.filter(u => u.id !== sessionId).length} Online Syncs
             </span>
+          </div>
+
+          {/* VIBE TAGS */}
+          <div className="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
+            {VIBE_TAGS.map(tag => (
+              <button
+                key={tag}
+                onClick={() => setFilterTag(tag)}
+                className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${filterTag === tag
+                  ? 'bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20 scale-105'
+                  : isDarkMode ? 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'
+                  }`}
+              >
+                {tag}
+              </button>
+            ))}
           </div>
 
           <div className="space-y-4">

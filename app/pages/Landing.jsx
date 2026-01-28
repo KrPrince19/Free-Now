@@ -5,6 +5,7 @@ import Link from "next/link";
 import Navbar from "../components/Navbar";
 import {
   motion,
+  AnimatePresence,
   useMotionValue,
   useTransform,
   animate,
@@ -130,8 +131,10 @@ export default function LandingPage() {
     duration: "0m",
   });
   const [liveChats, setLiveChats] = useState([]);
+  const [activeUsers, setActiveUsers] = useState([]);
+  const [pulses, setPulses] = useState([]); // { id, x, y }
   const [currentTime, setCurrentTime] = useState(new Date());
-  const { isDarkMode } = useTheme();
+  const { isDarkMode, updateVibeHue } = useTheme();
 
   /* ================= FETCH DATA ================= */
   useEffect(() => {
@@ -163,9 +166,16 @@ export default function LandingPage() {
         );
         const activeData = await activeRes.json();
         setLiveChats(activeData || []);
+
+        const usersRes = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/activeusers`
+        );
+        const usersData = await usersRes.json();
+        setActiveUsers(usersData || []);
+
+        updateVibeHue(((activeData || []).length * 2) + (usersData || []).length);
       } catch (err) {
         console.error("Landing fetch error:", err);
-        setMonthlyStats(0);
       }
     };
 
@@ -197,15 +207,32 @@ export default function LandingPage() {
     });
 
     socket.on('conversation-started', (data) => {
+      // Add a visual pulse
+      const newPulse = { id: Date.now(), x: 20 + Math.random() * 60, y: 30 + Math.random() * 40 };
+      setPulses(prev => [...prev.slice(-15), newPulse]);
+
+      setTimeout(() => {
+        setPulses(prev => prev.filter(p => p.id !== newPulse.id));
+      }, 5000);
+
       fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/active-conversations`)
         .then(res => res.json())
-        .then(activeData => setLiveChats(activeData || []));
+        .then(activeData => {
+          setLiveChats(activeData || []);
+          updateVibeHue((activeData || []).length * 2);
+        });
     });
 
     socket.on('conversation-ended', (data) => {
       fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/active-conversations`)
         .then(res => res.json())
-        .then(activeData => setLiveChats(activeData || []));
+        .then(activeData => {
+          setLiveChats(activeData || []);
+        });
+    });
+
+    socket.on('users-update', (users) => {
+      setActiveUsers(users || []);
     });
 
     return () => { socket.off(); };
@@ -221,8 +248,14 @@ export default function LandingPage() {
       <Navbar />
 
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className={`absolute top-[-10%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-colors duration-1000 ${isDarkMode ? 'bg-indigo-600/10' : 'bg-indigo-600/5'}`} />
-        <div className={`absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-colors duration-1000 ${isDarkMode ? 'bg-rose-600/10' : 'bg-rose-600/5'}`} />
+        <div
+          style={{ backgroundColor: `hsla(var(--vibe-hue), 60%, 50%, ${isDarkMode ? '0.1' : '0.05'})` }}
+          className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000"
+        />
+        <div
+          style={{ backgroundColor: `hsla(var(--vibe-hue), 60%, 50%, ${isDarkMode ? '0.1' : '0.05'})` }}
+          className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000"
+        />
       </div>
 
 
@@ -412,6 +445,142 @@ export default function LandingPage() {
           <Feature icon={<Zap />} title="Real Pulse" desc="Instant visibility when you're ready to connect." isDark={isDarkMode} />
         </div>
       </motion.section>
+
+      <section className="py-24 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-8">
+            <div className="max-w-2xl">
+              <div className={`p-1 w-fit rounded-full mb-6 border ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-rose-50 border-rose-100'}`}>
+                <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-rose-400' : 'text-rose-600'}`}>Live Pulse Map</div>
+              </div>
+              <h2 className={`text-5xl md:text-6xl font-black tracking-tighter leading-[0.9] ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Syncs across the <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500">Universe</span></h2>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex -space-x-4">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className={`w-12 h-12 rounded-full border-4 flex items-center justify-center font-black text-xs ${isDarkMode ? 'bg-slate-900 border-indigo-500/30 text-white' : 'bg-white border-indigo-500/20 text-slate-800'}`}>
+                    {String.fromCharCode(64 + i)}
+                  </div>
+                ))}
+              </div>
+              <p className={`text-[11px] font-black uppercase tracking-widest leading-tight ${isDarkMode ? 'text-white/40' : 'text-slate-400'}`}>{liveChats.length * 2}+ People <br />connected now</p>
+            </div>
+          </div>
+
+          <div className={`relative aspect-video md:aspect-[21/9] rounded-[3.5rem] border overflow-hidden group/map ${isDarkMode ? 'bg-[#0c0c0e] border-white/[0.03]' : 'bg-white border-slate-100 shadow-2xl shadow-indigo-500/5'}`}>
+
+            {/* --- SONAR RADAR BACKGROUND --- */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <motion.div
+                animate={{ scale: [1, 4], opacity: [0.5, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                className="absolute w-64 h-64 border border-rose-500/20 rounded-full"
+              />
+              <motion.div
+                animate={{ scale: [1, 4], opacity: [0.5, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: 1 }}
+                className="absolute w-64 h-64 border border-rose-500/20 rounded-full"
+              />
+              <motion.div
+                animate={{ scale: [1, 4], opacity: [0.5, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: 2 }}
+                className="absolute w-64 h-64 border border-rose-500/20 rounded-full"
+              />
+              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'linear-gradient(90deg, transparent 49.5%, rgba(244,63,94,0.3) 50%, transparent 50.5%)', backgroundSize: '100% 100%', transformOrigin: 'center' }}>
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }} className="w-full h-full bg-gradient-to-r from-rose-500/10 to-transparent" />
+              </div>
+            </div>
+
+            {/* PERSISTENT SYNC DOTS (Blinking Pink) */}
+            <AnimatePresence>
+              {[...liveChats, ...activeUsers].map((item, idx) => {
+                const id = item.roomId || item.id || idx;
+                const seed = id.toString();
+                let hash = 0;
+                for (let i = 0; i < seed.length; i++) hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+                const x = 15 + (Math.abs(hash % 700) / 10);
+                const y = 25 + (Math.abs((hash >> 4) % 500) / 10);
+
+                const isChat = !!item.roomId;
+
+                return (
+                  <motion.div
+                    key={`dot-${seed}`}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    style={{ left: `${x}%`, top: `${y}%` }}
+                    className="absolute z-20"
+                  >
+                    <div className="relative group/dot">
+                      {/* Label on hover */}
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-[8px] text-white rounded opacity-0 group-hover/dot:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">
+                        {isChat ? "Chatting..." : (item.name || "Offline")}
+                      </div>
+
+                      <motion.div
+                        animate={isChat ? { scale: [1, 1.2, 1] } : {}}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className={`w-3 h-3 -ml-1.5 -mt-1.5 rounded-full ${isChat ? 'bg-pink-500' : 'bg-pink-400/60'} shadow-[0_0_15px_rgba(236,72,153,0.6)] border border-white/20`}
+                      >
+                        <motion.div
+                          animate={{ opacity: [0.3, 1, 0.3] }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                          className="w-full h-full rounded-full bg-inherit"
+                        />
+                      </motion.div>
+
+                      {isChat && (
+                        <motion.div
+                          animate={{ scale: [1, 3], opacity: [0.4, 0] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="absolute inset-[-4px] rounded-full bg-pink-500/30"
+                        />
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+
+            {/* LIVE PULSES (Blinking Pink - New Connections) */}
+            <AnimatePresence>
+              {pulses.map(pulse => (
+                <motion.div
+                  key={pulse.id}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: [0.5, 2.5, 3.5], opacity: [0, 0.8, 0] }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 4, ease: "easeOut" }}
+                  style={{ left: `${pulse.x}%`, top: `${pulse.y}%` }}
+                  className="absolute w-8 h-8 -ml-4 -mt-4 rounded-full z-20 bg-pink-500 shadow-[0_0_50px_rgba(236,72,153,0.7)]"
+                />
+              ))}
+            </AnimatePresence>
+
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="relative">
+                <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }} transition={{ duration: 4, repeat: Infinity }} className="absolute inset-[-40px] border border-pink-500/20 rounded-full" />
+                <div className={`relative px-12 py-6 rounded-[3rem] border backdrop-blur-3xl flex flex-col items-center ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-white/80 border-rose-100'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-pink-500" />
+                    <span className={`text-[9px] font-black uppercase tracking-[0.5em] ${isDarkMode ? 'text-white/40' : 'text-slate-400'}`}>Sonar Active</span>
+                  </div>
+                  <h2 className={`text-xl font-thin tracking-[0.3em] uppercase ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                    Global <span className="font-black text-pink-500">Sync</span> Tracking
+                  </h2>
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute bottom-8 right-8 z-30">
+              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="px-8 py-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl hover:scale-105 transition-transform flex items-center gap-3">
+                <Zap size={14} className="text-yellow-400 fill-yellow-400" /> Start Vibe Sync
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <Footer isDark={isDarkMode} />
     </div>

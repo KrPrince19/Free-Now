@@ -179,8 +179,14 @@ export default function ProfilePage() {
 
       {/* --- BACKGROUND ACCENTS --- */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className={`absolute top-[-10%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-colors duration-1000 ${isDarkMode ? 'bg-indigo-600/10' : 'bg-indigo-600/5'}`} />
-        <div className={`absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-colors duration-1000 ${isDarkMode ? 'bg-rose-600/10' : 'bg-rose-600/5'}`} />
+        <div
+          style={{ backgroundColor: `hsla(var(--vibe-hue), 60%, 50%, ${isDarkMode ? '0.1' : '0.05'})` }}
+          className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000"
+        />
+        <div
+          style={{ backgroundColor: `hsla(var(--vibe-hue), 60%, 50%, ${isDarkMode ? '0.1' : '0.05'})` }}
+          className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000"
+        />
       </div>
 
       <AnimatePresence>

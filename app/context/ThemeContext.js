@@ -5,6 +5,7 @@ const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const [vibeHue, setVibeHue] = useState(240); // Default Indigo (240)
 
     // Synchronize with system preference or local storage if needed
     useEffect(() => {
@@ -18,6 +19,11 @@ export const ThemeProvider = ({ children }) => {
         }
     }, []);
 
+    // Update the CSS variable globally
+    useEffect(() => {
+        document.documentElement.style.setProperty('--vibe-hue', vibeHue);
+    }, [vibeHue]);
+
     const toggleTheme = () => {
         setIsDarkMode((prev) => {
             const next = !prev;
@@ -26,8 +32,14 @@ export const ThemeProvider = ({ children }) => {
         });
     };
 
+    const updateVibeHue = (count) => {
+        // Shift from 240 (Indigo) to 340 (Rose) based on activity
+        const newHue = Math.min(340, 240 + (count * 5));
+        setVibeHue(newHue);
+    };
+
     return (
-        <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
+        <ThemeContext.Provider value={{ isDarkMode, toggleTheme, vibeHue, updateVibeHue }}>
             {children}
         </ThemeContext.Provider>
     );
