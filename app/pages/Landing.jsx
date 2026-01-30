@@ -112,8 +112,8 @@ function Footer({ isDark }) {
         </div>
 
         <div className="flex items-center gap-6">
-          <a href="#" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Privacy</a>
-          <a href="#" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Terms</a>
+          <Link href="/terms" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Terms & Privacy</Link>
+          <Link href="/support" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Support</Link>
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${isDark ? 'bg-white/5 border-white/5 text-rose-400' : 'bg-rose-50 border-rose-100 text-rose-500'}`}>
             <Heart size={18} fill="currentColor" />
           </div>
