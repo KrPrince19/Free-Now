@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '../lib/socket';
-import { Send, X, ShieldCheck, Clock, Smile, Sparkles, Heart, Zap, User, Edit2, Trash2, Copy, Check, Camera, Eye, AlertCircle } from 'lucide-react';
+import { Send, X, ShieldCheck, Clock, Smile, Sparkles, Heart, Zap, User, Edit2, Trash2, Copy, Check, Camera, Eye, AlertCircle, Activity, Pencil, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CURATED_EMOJIS = ["❤️", "✨", "😂", "😍", "🔥", "🙌", "🥂", "🌟", "🌸", "🦋", "🍭", "🧸", "🦄", "🌈"];
@@ -28,7 +28,7 @@ const ICEBREAKERS = [
   "If you could only eat one meal for the rest of your life, what would it be? 🍕"
 ];
 
-export default function ChatBox({ chatData, currentUser, onClose }) {
+export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -46,6 +46,19 @@ export default function ChatBox({ chatData, currentUser, onClose }) {
   const [viewingImageId, setViewingImageId] = useState(null);
   const [imageTimers, setImageTimers] = useState({}); // id -> secondsLeft
   const [stagedImage, setStagedImage] = useState(null);
+  const [isGameOpen, setIsGameOpen] = useState(false);
+  const [gameState, setGameState] = useState(null);
+  const [lastRoundResult, setLastRoundResult] = useState(null);
+  const [partnerSelected, setPartnerSelected] = useState(false);
+  const [mySelection, setMySelection] = useState(null);
+  const [showMatchAnimation, setShowMatchAnimation] = useState(false);
+  const [showMissAnimation, setShowMissAnimation] = useState(false);
+  const [activeReactions, setActiveReactions] = useState([]); // Array of { id, x, y, emoji }
+  const [isDoodleOpen, setIsDoodleOpen] = useState(false);
+  const canvasRef = useRef(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const drawingContextRef = useRef(null);
+  const lastDrawingPos = useRef(null);
   const fileInputRef = useRef();
   const scrollRef = useRef();
   const typingTimeoutRef = useRef(null);
@@ -85,6 +98,79 @@ export default function ChatBox({ chatData, currentUser, onClose }) {
       setMessages((prev) => prev.map(m => m.id === messageId ? { ...m, text: "This message was deleted", deleted: true } : m));
     });
 
+    socket.on('vibe-game-status', ({ isOpen }) => {
+      setIsGameOpen(isOpen);
+      if (!isOpen) {
+        setGameState(null);
+        setLastRoundResult(null);
+        setMySelection(null);
+        setPartnerSelected(false);
+      }
+    });
+
+    socket.on('vibe-game-state', (state) => {
+      setGameState(state);
+      setLastRoundResult(null);
+      setMySelection(null);
+      setPartnerSelected(false);
+    });
+
+    socket.on('vibe-partner-selected', ({ sessionId: pSessionId }) => {
+      if (pSessionId !== sessionId) {
+        setPartnerSelected(true);
+      }
+    });
+
+    socket.on('vibe-round-result', ({ selections, isMatch }) => {
+      setLastRoundResult({ selections, isMatch });
+      if (isMatch) {
+        setShowMatchAnimation(true);
+        setTimeout(() => setShowMatchAnimation(false), 3000);
+      } else {
+        setShowMissAnimation(true);
+        setTimeout(() => setShowMissAnimation(false), 3000);
+      }
+    });
+
+    socket.on('message-reaction-ribbon', ({ messageId, emoji }) => {
+      const el = document.getElementById(`msg-bubble-${messageId}`);
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top;
+
+      const id = Date.now() + Math.random();
+      setActiveReactions(prev => [...prev, { emoji, x, y, id }]);
+      setTimeout(() => {
+        setActiveReactions(prev => prev.filter(r => r.id !== id));
+      }, 4000);
+    });
+
+    socket.on('draw-room-clear', () => {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    });
+
+    socket.on('draw-partner-start', ({ x, y, color }) => {
+      if (!drawingContextRef.current) return;
+      drawingContextRef.current.beginPath();
+      drawingContextRef.current.strokeStyle = color;
+      drawingContextRef.current.moveTo(x, y);
+    });
+
+    socket.on('draw-partner-move', ({ x, y }) => {
+      if (!drawingContextRef.current) return;
+      drawingContextRef.current.lineTo(x, y);
+      drawingContextRef.current.stroke();
+    });
+
+    socket.on('draw-room-toggle', ({ isOpen }) => {
+      setIsDoodleOpen(isOpen);
+    });
+
     return () => {
       socket.off('new-message');
       socket.off('partner-typing');
@@ -92,6 +178,15 @@ export default function ChatBox({ chatData, currentUser, onClose }) {
       socket.off('partner-left');
       socket.off('message-updated');
       socket.off('message-deleted');
+      socket.off('vibe-game-status');
+      socket.off('vibe-game-state');
+      socket.off('vibe-partner-selected');
+      socket.off('vibe-round-result');
+      socket.off('message-reaction-ribbon');
+      socket.off('draw-partner-start');
+      socket.off('draw-partner-move');
+      socket.off('draw-room-clear');
+      socket.off('draw-room-toggle');
     };
   }, []);
 
@@ -246,6 +341,73 @@ export default function ChatBox({ chatData, currentUser, onClose }) {
     onClose();
   };
 
+  const toggleVibeGame = () => {
+    const nextState = !isGameOpen;
+    socket.emit('vibe-game-toggle', { roomId: chatData.roomId, isOpen: nextState });
+  };
+
+  const sendReaction = (messageId, e, emoji = "❤️") => {
+    socket.emit('vibe-reaction', {
+      roomId: chatData.roomId,
+      messageId,
+      emoji
+    });
+  };
+
+  const startDrawing = ({ nativeEvent }) => {
+    const { offsetX, offsetY } = nativeEvent;
+    drawingContextRef.current.beginPath();
+    drawingContextRef.current.moveTo(offsetX, offsetY);
+    setIsDrawing(true);
+    socket.emit('draw-start', { roomId: chatData.roomId, x: offsetX, y: offsetY, color: '#6366f1' });
+  };
+
+  const draw = ({ nativeEvent }) => {
+    if (!isDrawing) return;
+    const { offsetX, offsetY } = nativeEvent;
+    drawingContextRef.current.lineTo(offsetX, offsetY);
+    drawingContextRef.current.stroke();
+    socket.emit('draw-move', { roomId: chatData.roomId, x: offsetX, y: offsetY });
+  };
+
+  const stopDrawing = () => {
+    drawingContextRef.current.closePath();
+    setIsDrawing(false);
+  };
+
+  const clearCanvas = () => {
+    socket.emit('draw-clear', { roomId: chatData.roomId });
+  };
+
+  useEffect(() => {
+    if (isDoodleOpen && canvasRef.current) {
+      const canvas = canvasRef.current;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const context = canvas.getContext('2d');
+      context.lineCap = "round";
+      context.strokeStyle = "#6366f1";
+      context.lineWidth = 5;
+      drawingContextRef.current = context;
+    }
+  }, [isDoodleOpen]);
+
+  const selectVibeEmoji = (emoji) => {
+    if (mySelection || !gameState) return;
+    // Check if it's my turn if first pick or if partner already picked
+    // The logic in backend allows anyone to pick, so we just throttle locally
+    setMySelection(emoji);
+    // Find my sessionId from chatData.members? No, we use sessionId from Clerk or currentUser name.
+    // In server.js we used sessionId. Let's find it.
+    // Dashboard page passes sessionId to register-user.
+    // We can use socket.sessionId if it was set.
+    socket.emit('vibe-emoji-select', {
+      roomId: chatData.roomId,
+      sessionId: sessionId,
+      emoji
+    });
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 1.05 }}
@@ -277,12 +439,29 @@ export default function ChatBox({ chatData, currentUser, onClose }) {
           </div>
         </div>
 
-        <button
-          onClick={handleClose}
-          className="group relative p-4 bg-white/80 hover:bg-rose-500 text-slate-400 hover:text-white rounded-[2rem] transition-all shadow-xl shadow-slate-200/50 active:scale-90"
-        >
-          <X size={24} className="group-hover:rotate-90 transition-transform" />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => socket.emit('draw-toggle', { roomId: chatData.roomId, isOpen: !isDoodleOpen })}
+            className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${isDoodleOpen ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}`}
+          >
+            <Pencil size={16} />
+          </button>
+
+          <button
+            onClick={toggleVibeGame}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${isGameOpen ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}`}
+          >
+            <Sparkles size={16} className={isGameOpen ? "animate-pulse" : ""} />
+            {isGameOpen ? "Close Game" : "Vibe Match"}
+          </button>
+
+          <button
+            onClick={handleClose}
+            className="group relative p-4 bg-white/80 hover:bg-rose-500 text-slate-400 hover:text-white rounded-[2rem] transition-all shadow-xl shadow-slate-200/50 active:scale-90"
+          >
+            <X size={24} className="group-hover:rotate-90 transition-transform" />
+          </button>
+        </div>
       </header>
 
       {/* --- MESSAGES AREA --- */}
@@ -344,10 +523,13 @@ export default function ChatBox({ chatData, currentUser, onClose }) {
                     </div>
                   )}
 
-                  <div className={`px-7 py-5 rounded-[2.8rem] text-[16px] font-semibold tracking-tight leading-relaxed shadow-xl border relative ${isMe
-                    ? msg.deleted || msg.expired ? 'bg-slate-100 text-slate-400 border-slate-200 italic' : 'bg-slate-900 text-white border-transparent rounded-tr-none shadow-slate-900/10'
-                    : msg.deleted || msg.expired ? 'bg-slate-50 text-slate-400 border-slate-100 italic' : 'bg-white text-slate-800 border-indigo-50 rounded-tl-none shadow-indigo-500/5'
-                    }`}>
+                  <div
+                    id={`msg-bubble-${msg.id || i}`}
+                    onClick={(e) => sendReaction(msg.id || i, e)}
+                    className={`px-7 py-5 rounded-[2.8rem] text-[16px] font-semibold tracking-tight leading-relaxed shadow-xl border relative cursor-heart ${isMe
+                      ? msg.deleted || msg.expired ? 'bg-slate-100 text-slate-400 border-slate-200 italic' : 'bg-slate-900 text-white border-transparent rounded-tr-none shadow-slate-900/10'
+                      : msg.deleted || msg.expired ? 'bg-slate-50 text-slate-400 border-slate-100 italic' : 'bg-white text-slate-800 border-indigo-50 rounded-tl-none shadow-indigo-500/5'
+                      }`}>
                     {isImage ? (
                       msg.expired || isExpired ? (
                         <div className="flex items-center gap-2 py-2">
@@ -410,6 +592,176 @@ export default function ChatBox({ chatData, currentUser, onClose }) {
 
         <div ref={scrollRef} className="h-4" />
       </div>
+
+      <style jsx global>{`
+        .cursor-heart:active { cursor: heart; }
+        @keyframes float-up {
+          0% { transform: translateY(0) scale(1); opacity: 1; }
+          100% { transform: translateY(-200px) scale(1.5); opacity: 0; }
+        }
+        .reaction-heart {
+          position: fixed;
+          pointer-events: none;
+          animation: float-up 4s ease-out forwards;
+          z-index: 200;
+        }
+      `}</style>
+
+      {/* REACTION PARTICLES */}
+      {activeReactions.map(reaction => (
+        <div
+          key={reaction.id}
+          className="reaction-heart text-2xl"
+          style={{ left: reaction.x, top: reaction.y }}
+        >
+          {reaction.emoji}
+          <div className="flex gap-1">
+            {[...Array(5)].map((_, i) => (
+              <motion.span
+                key={i}
+                initial={{ x: 0, y: 0, opacity: 1 }}
+                animate={{ x: (Math.random() - 0.5) * 100, y: -200, opacity: 0 }}
+                transition={{ duration: 2 + Math.random() * 2 }}
+                className="absolute text-xs"
+              >
+                {reaction.emoji}
+              </motion.span>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* DOODLE CANVAS */}
+      <AnimatePresence>
+        {isDoodleOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[140] bg-white/10 backdrop-blur-sm"
+          >
+            <canvas
+              ref={canvasRef}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+              className="w-full h-full cursor-crosshair"
+            />
+            <div className="absolute top-10 left-1/2 -translate-x-1/2 flex gap-4">
+              <button onClick={clearCanvas} className="bg-white p-4 rounded-full shadow-2xl text-slate-400 hover:text-rose-500 transition-all"><RotateCcw size={24} /></button>
+              <button onClick={() => socket.emit('draw-toggle', { roomId: chatData.roomId, isOpen: false })} className="bg-white p-4 rounded-full shadow-2xl text-slate-400 hover:text-indigo-600 transition-all"><X size={24} /></button>
+            </div>
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md px-8 py-4 rounded-full border border-white shadow-2xl text-[10px] font-black uppercase tracking-widest text-indigo-600">
+              Synced Vibe Doodle • Draw Together
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- VIBE GAME OVERLAY --- */}
+      <AnimatePresence>
+        {isGameOpen && gameState && (
+          <motion.div
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            className="absolute inset-0 z-50 bg-white/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8"
+          >
+            {/* MATCH ANIMATION */}
+            <AnimatePresence>
+              {showMatchAnimation && (
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1.5 }} exit={{ scale: 0 }} className="absolute z-[60] flex flex-col items-center">
+                  <div className="text-9xl shadow-2xl">💖</div>
+                  <h2 className="text-4xl font-black text-indigo-600 mt-8 tracking-tighter">VIBE SYNCED!</h2>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* MISS ANIMATION */}
+            <AnimatePresence>
+              {showMissAnimation && (
+                <motion.div initial={{ rotate: 10 }} animate={{ rotate: [-10, 10, -10, 0] }} exit={{ opacity: 0 }} className="absolute z-[60] flex flex-col items-center">
+                  <div className="text-9xl grayscale opacity-50">💔</div>
+                  <h2 className="text-4xl font-black text-slate-400 mt-8 tracking-tighter">MISSED VIBE</h2>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="text-center mb-12 relative z-10">
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-2 block">Round {gameState.round}</span>
+              <h2 className="text-4xl font-serif italic text-slate-900 leading-tight">Match your partner's vibe...</h2>
+
+              <div className="mt-8 flex items-center justify-center gap-4">
+                <div className={`px-5 py-2 rounded-full border text-[10px] font-black uppercase tracking-widest transition-all ${gameState.turnId === sessionId ? 'bg-indigo-500 border-indigo-500 text-white shadow-xl' : 'bg-slate-100 border-slate-200 text-slate-400'}`}>
+                  {gameState.turnId === sessionId ? "Your Turn" : `${partnerDetails.name}'s Turn`}
+                </div>
+                {partnerSelected && (
+                  <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-full border border-emerald-100 text-[10px] font-black uppercase tracking-widest">
+                    <Check size={12} /> Partner Ready
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {lastRoundResult ? (
+              <div className="flex flex-col items-center gap-10">
+                <div className="flex gap-16">
+                  <div className="flex flex-col items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">You</span>
+                    <div className="text-7xl">{lastRoundResult.selections[sessionId]}</div>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{partnerDetails.name}</span>
+                    <div className="text-7xl">{Object.values(lastRoundResult.selections).find((e, idx) => Object.keys(lastRoundResult.selections)[idx] !== sessionId) || "?"}</div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="relative w-full max-w-2xl flex flex-col items-center">
+                {(!mySelection && (gameState.turnId !== sessionId && !partnerSelected)) ? (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10 bg-indigo-50/30 rounded-[3rem] w-full border border-indigo-100/50 backdrop-blur-sm">
+                    <div className="text-4xl mb-4 animate-bounce">⏳</div>
+                    <p className="text-sm font-black text-indigo-600 uppercase tracking-widest">
+                      Wait for {partnerDetails.name} to lead the vibe...
+                    </p>
+                  </motion.div>
+                ) : (mySelection && !partnerSelected) ? (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10 bg-emerald-50/30 rounded-[3rem] w-full border border-emerald-100/50 backdrop-blur-sm">
+                    <div className="text-4xl mb-4 animate-pulse">✨</div>
+                    <p className="text-sm font-black text-emerald-600 uppercase tracking-widest">
+                      Vibe cast! Waiting for {partnerDetails.name} to match...
+                    </p>
+                  </motion.div>
+                ) : (
+                  <div className="grid grid-cols-4 md:grid-cols-7 gap-4">
+                    {CURATED_EMOJIS.map((emoji, idx) => (
+                      <motion.button
+                        key={idx}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => selectVibeEmoji(emoji)}
+                        disabled={mySelection !== null}
+                        className={`text-4xl w-16 h-16 flex items-center justify-center rounded-3xl border-2 transition-all ${mySelection === emoji ? 'bg-indigo-600 border-indigo-600 shadow-xl' : 'bg-white border-slate-100 hover:border-indigo-400'}`}
+                      >
+                        <span className={mySelection === emoji ? '' : ''}>{mySelection === emoji ? emoji : emoji}</span>
+                        {mySelection === emoji && <motion.div layoutId="selection" className="absolute inset-0 rounded-3xl bg-indigo-500 -z-10" />}
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={toggleVibeGame}
+              className="mt-16 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-rose-500 transition-colors"
+            >
+              Return to Chat
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* --- PREMIUM INPUT AREA --- */}
       <div className="p-6 md:p-8 bg-white/60 border-t border-indigo-500/10 backdrop-blur-xl relative z-30">

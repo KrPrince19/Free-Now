@@ -250,7 +250,7 @@ export default function ProfilePage() {
         )}
       </AnimatePresence>
 
-      {activeChat && <ChatBox chatData={activeChat} currentUser={user.username || user.firstName} onClose={() => {
+      {activeChat && <ChatBox chatData={activeChat} currentUser={user.username || user.firstName} sessionId={sessionId} onClose={() => {
         setActiveChat(null);
         localStorage.removeItem('activeChat');
       }} />}

@@ -289,6 +289,7 @@ export default function Dashboard() {
         <ChatBox
           chatData={activeChat}
           currentUser={user?.username || user?.firstName}
+          sessionId={sessionId}
           onClose={() => {
             setActiveChat(null);
             localStorage.removeItem('activeChat');
