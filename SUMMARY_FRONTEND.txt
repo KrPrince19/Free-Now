@@ -62,3 +62,6 @@ This file provides a structured overview of what has been implemented in the Fre
 
 ## 📱 Design Aesthetics
 **How it is implemented**: The "Premium" feel is achieved through a consistent application of backdrop-blur (up to 40px), HSL-based dynamic background hues that shift based on network activity, and a mobile-first layout that prioritizes thumb-friendly interaction zones.
+
+### Implementing Branding & Tab Title
+**How it is implemented**: We optimized the application's metadata in `layout.js` to ensure the browser tab displays "FreeNow | Ephemeral Vibe Sync" instead of generic URLs. This improves professional branding and search engine visibility.
