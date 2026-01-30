@@ -8,7 +8,7 @@ import { useStatus } from '../context/StatusContext';
 import ChatBox from '../components/ChatBox';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Send, CheckCircle2, LogOut,
+  Send, CheckCircle2,
   Sparkles, Coffee, BellRing, Clock, Zap, MessageSquare, ShieldCheck, XCircle,
   Moon, Sun, Heart
 } from 'lucide-react';
@@ -163,7 +163,7 @@ export default function ProfilePage() {
     setIncomingRequest(null);
   };
 
-  const handleSignOut = () => { signOut().then(() => router.push('/')); };
+
 
   if (!isLoaded) return (
     <div className={`h-screen flex items-center justify-center font-bold tracking-widest animate-pulse ${isDarkMode ? 'bg-[#0a0a0c] text-indigo-400' : 'bg-rose-50/20 text-rose-400'}`}>
@@ -262,9 +262,7 @@ export default function ProfilePage() {
           </div>
           <div className="flex items-center gap-4">
             <UserButton afterSignOutUrl="/" appearance={{ elements: { userButtonAvatarBox: "w-10 h-10 rounded-xl" } }} />
-            <button onClick={handleSignOut} className={`flex items-center gap-2 transition-colors text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-rose-500/60 hover:text-rose-500' : 'text-rose-500 hover:text-rose-600'}`}>
-              <LogOut size={14} /> Kill Session
-            </button>
+
           </div>
         </div>
 

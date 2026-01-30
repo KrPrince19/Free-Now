@@ -354,23 +354,40 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
     });
   };
 
-  const startDrawing = ({ nativeEvent }) => {
-    const { offsetX, offsetY } = nativeEvent;
+  const getCoordinates = (e) => {
+    if (e.touches && e.touches[0]) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top
+      };
+    }
+    return {
+      x: e.nativeEvent.offsetX,
+      y: e.nativeEvent.offsetY
+    };
+  };
+
+  const startDrawing = (e) => {
+    if (e.type === 'touchstart') e.preventDefault();
+    const { x, y } = getCoordinates(e);
     drawingContextRef.current.beginPath();
-    drawingContextRef.current.moveTo(offsetX, offsetY);
+    drawingContextRef.current.moveTo(x, y);
     setIsDrawing(true);
-    socket.emit('draw-start', { roomId: chatData.roomId, x: offsetX, y: offsetY, color: '#6366f1' });
+    socket.emit('draw-start', { roomId: chatData.roomId, x, y, color: '#6366f1' });
   };
 
-  const draw = ({ nativeEvent }) => {
+  const draw = (e) => {
     if (!isDrawing) return;
-    const { offsetX, offsetY } = nativeEvent;
-    drawingContextRef.current.lineTo(offsetX, offsetY);
+    if (e.type === 'touchmove') e.preventDefault();
+    const { x, y } = getCoordinates(e);
+    drawingContextRef.current.lineTo(x, y);
     drawingContextRef.current.stroke();
-    socket.emit('draw-move', { roomId: chatData.roomId, x: offsetX, y: offsetY });
+    socket.emit('draw-move', { roomId: chatData.roomId, x, y });
   };
 
-  const stopDrawing = () => {
+  const stopDrawing = (e) => {
+    if (e && e.type === 'touchend') e.preventDefault();
     drawingContextRef.current.closePath();
     setIsDrawing(false);
   };
@@ -646,7 +663,10 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
               onMouseMove={draw}
               onMouseUp={stopDrawing}
               onMouseLeave={stopDrawing}
-              className="w-full h-full cursor-crosshair"
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={stopDrawing}
+              className="w-full h-full cursor-crosshair touch-none"
             />
             <div className="absolute top-10 left-1/2 -translate-x-1/2 flex gap-4">
               <button onClick={clearCanvas} className="bg-white p-4 rounded-full shadow-2xl text-slate-400 hover:text-rose-500 transition-all"><RotateCcw size={24} /></button>
@@ -793,23 +813,23 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
 
         <form
           onSubmit={editingMessage ? (e) => { e.preventDefault(); handleSaveEdit(); } : handleSendMessage}
-          className={`max-w-5xl mx-auto flex gap-4 items-center bg-white p-3 rounded-[3rem] shadow-2xl transition-all border ${partnerDetails.left ? 'opacity-50 grayscale' : 'shadow-indigo-500/5 hover:shadow-indigo-500/10 border-indigo-50'} ${editingMessage ? 'ring-2 ring-indigo-500 border-indigo-200' : ''}`}
+          className={`max-w-5xl mx-auto flex gap-1.5 md:gap-4 items-center bg-white p-2 md:p-3 rounded-[2rem] md:rounded-[3rem] shadow-2xl transition-all border ${partnerDetails.left ? 'opacity-50 grayscale' : 'shadow-indigo-500/5 hover:shadow-indigo-500/10 border-indigo-50'} ${editingMessage ? 'ring-2 ring-indigo-500 border-indigo-200' : ''}`}
         >
           <button
             type="button"
             onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
-            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all active:scale-95 ${isEmojiPickerOpen ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-400 hover:text-indigo-600'}`}
+            className={`w-10 h-10 md:w-12 md:h-12 flex-shrink-0 flex items-center justify-center rounded-full transition-all active:scale-95 ${isEmojiPickerOpen ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-400 hover:text-indigo-600'}`}
           >
-            <Smile size={24} />
+            <Smile size={20} className="md:w-6 md:h-6" />
           </button>
 
           <button
             type="button"
             onClick={handleSpark}
             disabled={isSparking || partnerDetails.left}
-            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all active:scale-95 relative group overflow-hidden ${isSparking ? 'bg-indigo-100' : 'bg-gradient-to-tr from-indigo-50 to-rose-50 text-indigo-500 hover:shadow-lg hover:shadow-indigo-500/20'}`}
+            className={`hidden sm:flex w-10 h-10 md:w-12 md:h-12 flex-shrink-0 items-center justify-center rounded-full transition-all active:scale-95 relative group overflow-hidden ${isSparking ? 'bg-indigo-100' : 'bg-gradient-to-tr from-indigo-50 to-rose-50 text-indigo-500 hover:shadow-lg hover:shadow-indigo-500/20'}`}
           >
-            <Sparkles size={20} className={`${isSparking ? 'animate-spin' : 'group-hover:scale-110 transition-transform'}`} />
+            <Sparkles size={18} className={`${isSparking ? 'animate-spin' : 'group-hover:scale-110 transition-transform'}`} />
             <div className="absolute inset-0 bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity" />
           </button>
 
@@ -817,9 +837,9 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
             type="button"
             onClick={() => fileInputRef.current.click()}
             disabled={partnerDetails.left}
-            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all active:scale-95 bg-gradient-to-tr from-rose-50 to-indigo-50 text-rose-500 hover:shadow-lg hover:shadow-rose-500/20`}
+            className={`w-10 h-10 md:w-12 md:h-12 flex-shrink-0 flex items-center justify-center rounded-full transition-all active:scale-95 bg-gradient-to-tr from-rose-50 to-indigo-50 text-rose-500 hover:shadow-lg hover:shadow-rose-500/20`}
           >
-            <Camera size={20} />
+            <Camera size={18} />
           </button>
           <input
             type="file"
@@ -829,11 +849,11 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
             className="hidden"
           />
 
-          <div className="flex-1 flex flex-col relative">
+          <div className="flex-1 flex flex-col relative min-w-0">
             {stagedImage && (
               <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="absolute bottom-[120%] left-0 z-20">
                 <div className="relative group">
-                  <img src={stagedImage} className="w-20 h-20 object-cover rounded-2xl border-4 border-indigo-500 shadow-2xl" />
+                  <img src={stagedImage} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-2xl border-4 border-indigo-500 shadow-2xl" />
                   <button onClick={() => setStagedImage(null)} className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 shadow-lg hover:scale-110 transition-transform">
                     <X size={12} />
                   </button>
@@ -842,7 +862,7 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
             )}
             {editingMessage && (
               <div className="flex justify-between items-center px-2 py-1 bg-indigo-50/50 rounded-lg -mt-1 mb-1">
-                <span className="text-[10px] font-black uppercase text-indigo-500 tracking-widest">Editing Message</span>
+                <span className="text-[10px] font-black uppercase text-indigo-500 tracking-widest truncate">Editing</span>
                 <button onClick={cancelEdit} className="text-rose-500 hover:text-rose-600"><X size={14} /></button>
               </div>
             )}
@@ -851,20 +871,20 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
               value={message}
               onChange={handleInputChange}
               disabled={partnerDetails.left}
-              placeholder={partnerDetails.left ? "Partner has disconnected" : editingMessage ? "Edit message..." : `Message ${partnerDetails.name}...`}
-              className="bg-transparent px-2 py-2 text-lg outline-none font-bold text-slate-800 placeholder:text-slate-300 placeholder:font-medium"
+              placeholder={partnerDetails.left ? "Left" : editingMessage ? "Edit..." : `Vibe...`}
+              className="bg-transparent px-1 md:px-2 py-2 text-base md:text-lg outline-none font-bold text-slate-800 placeholder:text-slate-300 placeholder:font-medium min-w-0"
             />
           </div>
 
           <button
             type="submit"
             disabled={(!message.trim() && !stagedImage) || partnerDetails.left}
-            className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90 ${(!message.trim() && !stagedImage) || partnerDetails.left
+            className={`w-11 h-11 md:w-14 md:h-14 flex-shrink-0 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90 ${(!message.trim() && !stagedImage) || partnerDetails.left
               ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
               : editingMessage ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-slate-900 hover:bg-indigo-600 text-white shadow-indigo-500/20'
               }`}
           >
-            {editingMessage ? <Check size={22} /> : <Send size={22} className={message.trim() || stagedImage ? "translate-x-0.5 -translate-y-0.5" : ""} />}
+            {editingMessage ? <Check size={20} className="md:w-[22px] md:h-[22px]" /> : <Send size={20} className={`${message.trim() || stagedImage ? "translate-x-0.5 -translate-y-0.5" : ""} md:w-[22px] md:h-[22px]`} />}
           </button>
         </form>
 

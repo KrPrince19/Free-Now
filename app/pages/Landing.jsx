@@ -577,11 +577,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-30">
-              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="px-5 py-3 md:px-8 md:py-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 md:gap-3">
-                <Zap size={14} className="text-yellow-400 fill-yellow-400" /> Start Vibe Sync
-              </button>
-            </div>
+
           </div>
         </div>
       </section>
