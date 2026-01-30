@@ -514,8 +514,12 @@ export default function LandingPage() {
                   >
                     <div className="relative group/dot">
                       {/* Label on hover */}
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-[8px] text-white rounded opacity-0 group-hover/dot:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">
-                        {isChat ? "Chatting..." : (item.name || "Offline")}
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-4 py-2 bg-indigo-600/90 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-white rounded-2xl opacity-0 group-hover/dot:opacity-100 whitespace-nowrap pointer-events-none transition-all duration-300 border border-white/20 shadow-2xl z-50">
+                        {isChat
+                          ? `${item.names.replace(" & ", " and ")} are chatting`
+                          : `${item.name || "Someone"} is online`
+                        }
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-indigo-600/90" />
                       </div>
 
                       <motion.div
@@ -561,20 +565,20 @@ export default function LandingPage() {
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="relative">
                 <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }} transition={{ duration: 4, repeat: Infinity }} className="absolute inset-[-40px] border border-pink-500/20 rounded-full" />
-                <div className={`relative px-12 py-6 rounded-[3rem] border backdrop-blur-3xl flex flex-col items-center ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-white/80 border-rose-100'}`}>
+                <div className={`relative px-8 py-4 md:px-12 md:py-6 rounded-[2.5rem] md:rounded-[3rem] border backdrop-blur-3xl flex flex-col items-center ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-white/80 border-rose-100'}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-pink-500" />
-                    <span className={`text-[9px] font-black uppercase tracking-[0.5em] ${isDarkMode ? 'text-white/40' : 'text-slate-400'}`}>Sonar Active</span>
+                    <span className={`text-[8px] md:text-[9px] font-black uppercase tracking-[0.5em] ${isDarkMode ? 'text-white/40' : 'text-slate-400'}`}>Sonar Active</span>
                   </div>
-                  <h2 className={`text-xl font-thin tracking-[0.3em] uppercase ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                  <h2 className={`text-sm md:text-xl font-thin tracking-[0.2em] md:tracking-[0.3em] uppercase ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
                     Global <span className="font-black text-pink-500">Sync</span> Tracking
                   </h2>
                 </div>
               </div>
             </div>
 
-            <div className="absolute bottom-8 right-8 z-30">
-              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="px-8 py-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl hover:scale-105 transition-transform flex items-center gap-3">
+            <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-30">
+              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="px-5 py-3 md:px-8 md:py-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 md:gap-3">
                 <Zap size={14} className="text-yellow-400 fill-yellow-400" /> Start Vibe Sync
               </button>
             </div>

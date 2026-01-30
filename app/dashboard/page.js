@@ -29,7 +29,7 @@ function Counter({ value }) {
 export default function Dashboard() {
   const { user } = useUser();
   const { sessionId } = useAuth();
-  const { statusText } = useStatus();
+  const { statusText, toggleStatus } = useStatus();
   const [nearbyUsers, setNearbyUsers] = useState([]);
   const [filterTag, setFilterTag] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -122,6 +122,7 @@ export default function Dashboard() {
       setShowConnectionAnimation(true);
       setActiveChat(data);
       localStorage.setItem('activeChat', JSON.stringify(data));
+      toggleStatus(false); // Set status to busy locally when chat starts
       fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/global-stats/monthly`).then(res => res.json()).then(d => setMonthlyMatches(d.count || 0));
       setTimeout(() => setShowConnectionAnimation(false), 2500);
     });
@@ -129,6 +130,7 @@ export default function Dashboard() {
       setShowConnectionAnimation(true);
       setActiveChat(data);
       localStorage.setItem('activeChat', JSON.stringify(data));
+      toggleStatus(false); // Set status to busy locally when chat starts
       setTimeout(() => setShowConnectionAnimation(false), 2500);
     });
 

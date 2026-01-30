@@ -113,12 +113,14 @@ export default function ProfilePage() {
         setShowConnectionAnimation(true);
         setActiveChat(data);
         localStorage.setItem('activeChat', JSON.stringify(data));
+        toggleStatus(false); // Set status to busy locally when chat starts
         setTimeout(() => setShowConnectionAnimation(false), 2500);
       });
       socket.on('chat-init-receiver', (data) => {
         setShowConnectionAnimation(true);
         setActiveChat(data);
         localStorage.setItem('activeChat', JSON.stringify(data));
+        toggleStatus(false); // Set status to busy locally when chat starts
         setTimeout(() => setShowConnectionAnimation(false), 2500);
       });
 
