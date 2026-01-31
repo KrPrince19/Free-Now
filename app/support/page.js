@@ -39,6 +39,10 @@ const FAQS = [
     {
         question: "Is the platform really free?",
         answer: "Yes, FreeNow is built for the community. There are no subscriptions or paywalls. It's just a space to connect, sync, and vibe without the baggage of traditional social media."
+    },
+    {
+        question: "What should I do if my account is suspended?",
+        answer: "If your account is suspended, it means our governance system (ICE Protocol) detected a violation of the community vibe. You can reach out to us via the 'Drop a Vibe' form on this page. Provide your registered name and email, and our administrators will review your case for possible reinstatement."
     }
 ];
 
@@ -52,8 +56,8 @@ function FAQItem({ faq, index }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             className={`mb-4 rounded-3xl border transition-all duration-300 ${isOpen
-                    ? (isDarkMode ? 'bg-white/5 border-indigo-500/30' : 'bg-white border-indigo-200 shadow-xl shadow-indigo-500/5')
-                    : (isDarkMode ? 'bg-white/[0.02] border-white/5 hover:border-white/10' : 'bg-white/50 border-slate-100 hover:border-indigo-100')
+                ? (isDarkMode ? 'bg-white/5 border-indigo-500/30' : 'bg-white border-indigo-200 shadow-xl shadow-indigo-500/5')
+                : (isDarkMode ? 'bg-white/[0.02] border-white/5 hover:border-white/10' : 'bg-white/50 border-slate-100 hover:border-indigo-100')
                 }`}
         >
             <button
@@ -184,8 +188,8 @@ export default function SupportPage() {
                                             value={formData.name}
                                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                             className={`w-full pl-14 pr-6 py-5 rounded-2xl outline-none font-bold transition-all border ${isDarkMode
-                                                    ? 'bg-white/5 border-white/5 focus:border-indigo-500/50 text-white'
-                                                    : 'bg-slate-50 border-slate-100 focus:bg-white focus:border-indigo-200 text-slate-800'
+                                                ? 'bg-white/5 border-white/5 focus:border-indigo-500/50 text-white'
+                                                : 'bg-slate-50 border-slate-100 focus:bg-white focus:border-indigo-200 text-slate-800'
                                                 }`}
                                         />
                                     </div>
@@ -202,8 +206,8 @@ export default function SupportPage() {
                                             value={formData.email}
                                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                             className={`w-full pl-14 pr-6 py-5 rounded-2xl outline-none font-bold transition-all border ${isDarkMode
-                                                    ? 'bg-white/5 border-white/5 focus:border-indigo-500/50 text-white'
-                                                    : 'bg-slate-50 border-slate-100 focus:bg-white focus:border-indigo-200 text-slate-800'
+                                                ? 'bg-white/5 border-white/5 focus:border-indigo-500/50 text-white'
+                                                : 'bg-slate-50 border-slate-100 focus:bg-white focus:border-indigo-200 text-slate-800'
                                                 }`}
                                         />
                                     </div>
@@ -218,8 +222,8 @@ export default function SupportPage() {
                                         value={formData.message}
                                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                         className={`w-full px-6 py-5 rounded-3xl outline-none font-bold transition-all border resize-none ${isDarkMode
-                                                ? 'bg-white/5 border-white/5 focus:border-indigo-500/50 text-white'
-                                                : 'bg-slate-50 border-slate-100 focus:bg-white focus:border-indigo-200 text-slate-800'
+                                            ? 'bg-white/5 border-white/5 focus:border-indigo-500/50 text-white'
+                                            : 'bg-slate-50 border-slate-100 focus:bg-white focus:border-indigo-200 text-slate-800'
                                             }`}
                                     />
                                 </div>
@@ -227,8 +231,8 @@ export default function SupportPage() {
                                 <button
                                     disabled={formState !== 'idle'}
                                     className={`w-full py-6 rounded-3xl font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95 ${formState === 'success'
-                                            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                                            : 'bg-slate-900 text-white hover:bg-indigo-600 shadow-xl shadow-indigo-500/20'
+                                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                                        : 'bg-slate-900 text-white hover:bg-indigo-600 shadow-xl shadow-indigo-500/20'
                                         }`}
                                 >
                                     {formState === 'idle' && (

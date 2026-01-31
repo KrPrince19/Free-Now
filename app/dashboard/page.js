@@ -107,6 +107,7 @@ export default function Dashboard() {
     socket.on('connect', handleRegister);
 
     socket.on("users-update", (users) => {
+      if (!users) return;
       setNearbyUsers(users);
       updateVibeHue(users.length);
     });

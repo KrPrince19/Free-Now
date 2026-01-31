@@ -42,6 +42,25 @@ export default function TermsPage() {
         }
     ];
 
+    const faqs = [
+        {
+            q: "What is the ICE Protocol?",
+            a: "The 'Instant Closure Entry' protocol is our safety response system. If an administrator detects a severe violation of community vibe or safety, your account can be instantly suspended. This locks the application with a restricted access overlay, preventing any further interaction."
+        },
+        {
+            q: "Can I permanently delete my account?",
+            a: "Yes. Our governance model allows for complete removal. Upon your request or an administrative action, we perform a 'Cascading Delete' which purges your profile, email reference, and every trace of your activity logs from our systems."
+        },
+        {
+            q: "How does 'Reset Stats' work?",
+            a: "If you feel your activity metrics don't reflect your current vibe, the administration can reset your total requests and matches to zero. This gives you a fresh start within the community while keeping your registered identity intact."
+        },
+        {
+            q: "Is my private data secure?",
+            a: "Absolutely. We pride ourselves on 'Read-Only' default access. Administrators cannot view private messages (as they are never logged) or ephemeral snapshots. Governance actions only affect account status and metadata."
+        }
+    ];
+
     return (
         <div className={`min-h-screen font-sans transition-colors duration-500 selection:bg-indigo-500/30 ${isDarkMode ? 'bg-[#0a0a0c] text-white' : 'bg-rose-50/30 text-slate-800'}`}>
             <Navbar />
@@ -89,6 +108,34 @@ export default function TermsPage() {
                         </motion.div>
                     ))}
                 </div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 }}
+                    className="mt-24 mb-12"
+                >
+                    <h2 className="text-3xl font-black tracking-tight mb-8 px-4 flex items-center gap-3">
+                        <Scale className="text-indigo-500" size={24} />
+                        Governance FAQ
+                    </h2>
+                    <div className="space-y-4">
+                        {faqs.map((faq, idx) => (
+                            <div
+                                key={idx}
+                                className={`p-8 rounded-3xl border transition-all ${isDarkMode ? 'bg-white/[0.01] border-white/[0.03] hover:border-white/10' : 'bg-slate-50 border-slate-100'
+                                    }`}
+                            >
+                                <h4 className="text-sm font-black uppercase tracking-widest text-indigo-500 mb-2">Question</h4>
+                                <p className="text-lg font-bold mb-4 tracking-tight">{faq.q}</p>
+                                <h4 className={`text-[10px] font-black uppercase tracking-widest mb-2 ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>The Solution</h4>
+                                <p className={`text-sm leading-relaxed font-medium ${isDarkMode ? 'text-white/40' : 'text-slate-500'}`}>
+                                    {faq.a}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
 
                 <motion.section
                     initial={{ opacity: 0 }}
