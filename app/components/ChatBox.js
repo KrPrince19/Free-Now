@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '../lib/socket';
-import { Send, X, ShieldCheck, Clock, Smile, Sparkles, Heart, Zap, User, Edit2, Trash2, Copy, Check, Camera, Eye, AlertCircle, Activity, Pencil, RotateCcw } from 'lucide-react';
+import { Send, X, ShieldCheck, Clock, Smile, Sparkles, Heart, Zap, User, Edit2, Trash2, Copy, Check, Camera, Eye, AlertCircle, Activity, Pencil, RotateCcw, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CURATED_EMOJIS = ["❤️", "✨", "😂", "😍", "🔥", "🙌", "🥂", "🌟", "🌸", "🦋", "🍭", "🧸", "🦄", "🌈"];
@@ -39,6 +39,7 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   });
   const [isPartnerTyping, setIsPartnerTyping] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [partnerDetails, setPartnerDetails] = useState({ name: chatData.partnerName, left: false });
   const [editingMessage, setEditingMessage] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
@@ -236,6 +237,7 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
     setMessage("");
     setStagedImage(null);
     setIsEmojiPickerOpen(false);
+    setIsMobileMenuOpen(false);
   };
 
   const addEmoji = (emoji) => {
@@ -246,6 +248,7 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
     setEditingMessage(msg);
     setMessage(msg.text);
     setIsEmojiPickerOpen(false);
+    setIsMobileMenuOpen(false);
   };
 
   const cancelEdit = () => {
@@ -344,6 +347,7 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   const handleClose = () => {
     socket.emit('end-chat', { roomId: chatData.roomId, senderName: currentUser });
     localStorage.removeItem(`chat_messages_${chatData.roomId}`);
+    setIsMobileMenuOpen(false);
     onClose();
   };
 
@@ -842,32 +846,53 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
           onSubmit={editingMessage ? (e) => { e.preventDefault(); handleSaveEdit(); } : handleSendMessage}
           className={`max-w-5xl mx-auto flex gap-1.5 md:gap-4 items-center bg-white p-2 md:p-3 rounded-[2rem] md:rounded-[3rem] shadow-2xl transition-all border ${partnerDetails.left ? 'opacity-50 grayscale' : 'shadow-indigo-500/5 hover:shadow-indigo-500/10 border-indigo-50'} ${editingMessage ? 'ring-2 ring-indigo-500 border-indigo-200' : ''}`}
         >
+          {/* MOBILE ACTION TOGGLE (WhatsApp Style) */}
           <button
             type="button"
-            onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
-            className={`w-10 h-10 md:w-12 md:h-12 flex-shrink-0 flex items-center justify-center rounded-full transition-all active:scale-95 ${isEmojiPickerOpen ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-400 hover:text-indigo-600'}`}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-indigo-600 transition-all active:scale-90"
           >
-            <Smile size={20} className="md:w-6 md:h-6" />
+            <Plus size={20} className={`${isMobileMenuOpen ? 'rotate-45 text-rose-500' : ''} transition-transform duration-300`} />
           </button>
 
-          <button
-            type="button"
-            onClick={handleSpark}
-            disabled={isSparking || partnerDetails.left}
-            className={`flex w-10 h-10 md:w-12 md:h-12 flex-shrink-0 items-center justify-center rounded-full transition-all active:scale-95 relative group overflow-hidden ${isSparking ? 'bg-indigo-100' : 'bg-gradient-to-tr from-indigo-50 to-rose-50 text-indigo-500 hover:shadow-lg hover:shadow-indigo-500/20'}`}
-          >
-            <Sparkles size={18} className={`${isSparking ? 'animate-spin' : 'group-hover:scale-110 transition-transform'}`} />
-            <div className="absolute inset-0 bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </button>
+          <AnimatePresence>
+            {(isMobileMenuOpen || (typeof window !== 'undefined' && window.innerWidth >= 768)) && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className={`${isMobileMenuOpen ? 'flex' : 'hidden md:flex'} items-center gap-1.5 md:gap-4`}
+              >
+                <button
+                  type="button"
+                  onClick={() => { setIsEmojiPickerOpen(!isEmojiPickerOpen); if (isMobileMenuOpen) setIsMobileMenuOpen(false); }}
+                  className={`w-10 h-10 md:w-12 md:h-12 flex-shrink-0 flex items-center justify-center rounded-full transition-all active:scale-95 ${isEmojiPickerOpen ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-400 hover:text-indigo-600'}`}
+                >
+                  <Smile size={20} className="md:w-6 md:h-6" />
+                </button>
 
-          <button
-            type="button"
-            onClick={() => fileInputRef.current.click()}
-            disabled={partnerDetails.left}
-            className={`w-10 h-10 md:w-12 md:h-12 flex-shrink-0 flex items-center justify-center rounded-full transition-all active:scale-95 bg-gradient-to-tr from-rose-50 to-indigo-50 text-rose-500 hover:shadow-lg hover:shadow-rose-500/20`}
-          >
-            <Camera size={18} />
-          </button>
+                <button
+                  type="button"
+                  onClick={() => { handleSpark(); if (isMobileMenuOpen) setIsMobileMenuOpen(false); }}
+                  disabled={isSparking || partnerDetails.left}
+                  className={`flex w-10 h-10 md:w-12 md:h-12 flex-shrink-0 items-center justify-center rounded-full transition-all active:scale-95 relative group overflow-hidden ${isSparking ? 'bg-indigo-100' : 'bg-gradient-to-tr from-indigo-50 to-rose-50 text-indigo-500 hover:shadow-lg hover:shadow-indigo-500/20'}`}
+                >
+                  <Sparkles size={18} className={`${isSparking ? 'animate-spin' : 'group-hover:scale-110 transition-transform'}`} />
+                  <div className="absolute inset-0 bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { fileInputRef.current.click(); if (isMobileMenuOpen) setIsMobileMenuOpen(false); }}
+                  disabled={partnerDetails.left}
+                  className={`w-10 h-10 md:w-12 md:h-12 flex-shrink-0 flex items-center justify-center rounded-full transition-all active:scale-95 bg-gradient-to-tr from-rose-50 to-indigo-50 text-rose-500 hover:shadow-lg hover:shadow-rose-500/20`}
+                >
+                  <Camera size={18} />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <input
             type="file"
             ref={fileInputRef}
