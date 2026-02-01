@@ -155,15 +155,21 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
     });
 
     socket.on('draw-partner-start', ({ x, y, color }) => {
-      if (!drawingContextRef.current) return;
+      if (!drawingContextRef.current || !canvasRef.current) return;
+      const canvas = canvasRef.current;
+      const realX = x * canvas.width;
+      const realY = y * canvas.height;
       drawingContextRef.current.beginPath();
       drawingContextRef.current.strokeStyle = color;
-      drawingContextRef.current.moveTo(x, y);
+      drawingContextRef.current.moveTo(realX, realY);
     });
 
     socket.on('draw-partner-move', ({ x, y }) => {
-      if (!drawingContextRef.current) return;
-      drawingContextRef.current.lineTo(x, y);
+      if (!drawingContextRef.current || !canvasRef.current) return;
+      const canvas = canvasRef.current;
+      const realX = x * canvas.width;
+      const realY = y * canvas.height;
+      drawingContextRef.current.lineTo(realX, realY);
       drawingContextRef.current.stroke();
     });
 
@@ -371,19 +377,38 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   const startDrawing = (e) => {
     if (e.type === 'touchstart') e.preventDefault();
     const { x, y } = getCoordinates(e);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     drawingContextRef.current.beginPath();
     drawingContextRef.current.moveTo(x, y);
     setIsDrawing(true);
-    socket.emit('draw-start', { roomId: chatData.roomId, x, y, color: '#6366f1' });
+
+    // Normalize coordinates for cross-device consistency
+    socket.emit('draw-start', {
+      roomId: chatData.roomId,
+      x: x / canvas.width,
+      y: y / canvas.height,
+      color: '#6366f1'
+    });
   };
 
   const draw = (e) => {
     if (!isDrawing) return;
     if (e.type === 'touchmove') e.preventDefault();
     const { x, y } = getCoordinates(e);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     drawingContextRef.current.lineTo(x, y);
     drawingContextRef.current.stroke();
-    socket.emit('draw-move', { roomId: chatData.roomId, x, y });
+
+    // Normalize coordinates
+    socket.emit('draw-move', {
+      roomId: chatData.roomId,
+      x: x / canvas.width,
+      y: y / canvas.height
+    });
   };
 
   const stopDrawing = (e) => {
@@ -670,11 +695,11 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
               onTouchEnd={stopDrawing}
               className="w-full h-full cursor-crosshair touch-none"
             />
-            <div className="absolute top-10 left-1/2 -translate-x-1/2 flex gap-4">
-              <button onClick={clearCanvas} className="bg-white p-4 rounded-full shadow-2xl text-slate-400 hover:text-rose-500 transition-all"><RotateCcw size={24} /></button>
-              <button onClick={() => socket.emit('draw-toggle', { roomId: chatData.roomId, isOpen: false })} className="bg-white p-4 rounded-full shadow-2xl text-slate-400 hover:text-indigo-600 transition-all"><X size={24} /></button>
+            <div className="absolute top-6 md:top-10 left-1/2 -translate-x-1/2 flex gap-4">
+              <button onClick={clearCanvas} className="bg-white p-3 md:p-4 rounded-full shadow-2xl text-slate-400 hover:text-rose-500 transition-all"><RotateCcw size={20} className="md:w-6 md:h-6" /></button>
+              <button onClick={() => socket.emit('draw-toggle', { roomId: chatData.roomId, isOpen: false })} className="bg-white p-3 md:p-4 rounded-full shadow-2xl text-slate-400 hover:text-indigo-600 transition-all"><X size={20} className="md:w-6 md:h-6" /></button>
             </div>
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md px-8 py-4 rounded-full border border-white shadow-2xl text-[10px] font-black uppercase tracking-widest text-indigo-600">
+            <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md px-6 md:px-8 py-3 md:py-4 rounded-full border border-white shadow-2xl text-[8px] md:text-[10px] font-black uppercase tracking-widest text-indigo-600 whitespace-nowrap">
               Synced Vibe Doodle • Draw Together
             </div>
           </motion.div>
