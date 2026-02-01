@@ -433,50 +433,52 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
       className="fixed inset-0 z-[100] bg-white/40 backdrop-blur-3xl flex flex-col h-screen w-full overflow-hidden font-sans"
     >
       {/* --- PREMIUM HEADER --- */}
-      <header className="px-8 py-6 border-b border-indigo-500/10 flex justify-between items-center bg-white/60 relative z-20">
-        <div className="flex items-center gap-5">
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-tr from-rose-400 to-indigo-600 rounded-[1.6rem] blur opacity-20 group-hover:opacity-40 transition-opacity" />
-            <div className="relative w-14 h-14 bg-gradient-to-tr from-rose-500 to-indigo-600 rounded-[1.5rem] flex items-center justify-center text-white text-xl font-black shadow-2xl">
+      <header className="px-4 py-4 md:px-8 md:py-6 border-b border-indigo-500/10 flex justify-between items-center bg-white/60 relative z-20">
+        <div className="flex items-center gap-3 md:gap-5 min-w-0">
+          <div className="relative group flex-shrink-0">
+            <div className="absolute -inset-1 bg-gradient-to-tr from-rose-400 to-indigo-600 rounded-[1.2rem] md:rounded-[1.6rem] blur opacity-20 group-hover:opacity-40 transition-opacity" />
+            <div className="relative w-10 h-10 md:w-14 md:h-14 bg-gradient-to-tr from-rose-500 to-indigo-600 rounded-[1.1rem] md:rounded-[1.5rem] flex items-center justify-center text-white text-lg md:text-xl font-black shadow-2xl">
               {partnerDetails.name ? partnerDetails.name[0] : "?"}
             </div>
             {!partnerDetails.left && (
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-4 border-white rounded-full shadow-lg" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 md:w-5 md:h-5 bg-emerald-500 border-2 md:border-4 border-white rounded-full shadow-lg" />
             )}
           </div>
-          <div>
-            <h3 className="font-black text-slate-900 text-2xl tracking-tighter flex items-center gap-2">
+          <div className="min-w-0">
+            <h3 className="font-black text-slate-900 text-lg md:text-2xl tracking-tighter flex items-center gap-2 truncate">
               {partnerDetails.name}
-              {partnerDetails.left && <span className="text-xs font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Left</span>}
+              {partnerDetails.left && <span className="text-[8px] md:text-xs font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Left</span>}
             </h3>
             <div className="flex items-center gap-2 mt-0.5">
-              <div className="h-1.5 w-1.5 rounded-full bg-indigo-500/50" />
-              <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">End-to-End Vibe Security</p>
+              <div className="h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-indigo-500/50" />
+              <p className="text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-[0.1em] md:tracking-[0.2em] truncate">End-to-End Vibe Security</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
           <button
             onClick={() => socket.emit('draw-toggle', { roomId: chatData.roomId, isOpen: !isDoodleOpen })}
-            className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${isDoodleOpen ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}`}
+            className={`flex items-center justify-center p-3 md:px-4 md:py-3 rounded-xl md:rounded-2xl transition-all ${isDoodleOpen ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}`}
+            title="Doodle"
           >
-            <Pencil size={16} />
+            <Pencil size={18} />
           </button>
 
           <button
             onClick={toggleVibeGame}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${isGameOpen ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}`}
+            className={`flex items-center gap-2 px-3 py-3 md:px-5 md:py-3 rounded-xl md:rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${isGameOpen ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}`}
           >
-            <Sparkles size={16} className={isGameOpen ? "animate-pulse" : ""} />
-            {isGameOpen ? "Close Game" : "Vibe Match"}
+            <Sparkles size={18} className={isGameOpen ? "animate-pulse" : ""} />
+            <span className="hidden md:inline">{isGameOpen ? "Close Game" : "Vibe Match"}</span>
+            {!isGameOpen && <span className="md:hidden">Vibe</span>}
           </button>
 
           <button
             onClick={handleClose}
-            className="group relative p-4 bg-white/80 hover:bg-rose-500 text-slate-400 hover:text-white rounded-[2rem] transition-all shadow-xl shadow-slate-200/50 active:scale-90"
+            className="group relative p-2.5 md:p-4 bg-white/80 hover:bg-rose-500 text-slate-400 hover:text-white rounded-xl md:rounded-[2rem] transition-all shadow-lg md:shadow-xl shadow-slate-200/50 active:scale-90"
           >
-            <X size={24} className="group-hover:rotate-90 transition-transform" />
+            <X size={20} className="md:w-6 md:h-6 group-hover:rotate-90 transition-transform" />
           </button>
         </div>
       </header>
@@ -484,12 +486,12 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
       {/* --- MESSAGES AREA --- */}
       <div className="flex-1 overflow-y-auto px-6 md:px-12 py-10 space-y-8 relative">
         {messages.length === 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="h-full flex flex-col items-center justify-center text-center opacity-40">
-            <div className="w-24 h-24 bg-gradient-to-br from-indigo-50 to-rose-50 rounded-[2.5rem] flex items-center justify-center mb-6 border border-white/50">
-              <Zap className="text-indigo-400 w-10 h-10" />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="absolute inset-0 flex flex-col items-center justify-center text-center opacity-40 px-6">
+            <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-indigo-50 to-rose-50 rounded-[1.8rem] md:rounded-[2.5rem] flex items-center justify-center mb-6 border border-white/50">
+              <Zap className="text-indigo-400 w-8 h-8 md:w-10 md:h-10" />
             </div>
-            <p className="text-xs font-black text-slate-900 uppercase tracking-[0.4em]">The vibe is established</p>
-            <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-widest italic">Break the ice...</p>
+            <p className="text-[10px] md:text-xs font-black text-slate-900 uppercase tracking-[0.3em] md:tracking-[0.4em]">The vibe is established</p>
+            <p className="text-[9px] md:text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-widest italic">Break the ice...</p>
           </motion.div>
         )}
 
@@ -827,7 +829,7 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
             type="button"
             onClick={handleSpark}
             disabled={isSparking || partnerDetails.left}
-            className={`hidden sm:flex w-10 h-10 md:w-12 md:h-12 flex-shrink-0 items-center justify-center rounded-full transition-all active:scale-95 relative group overflow-hidden ${isSparking ? 'bg-indigo-100' : 'bg-gradient-to-tr from-indigo-50 to-rose-50 text-indigo-500 hover:shadow-lg hover:shadow-indigo-500/20'}`}
+            className={`flex w-10 h-10 md:w-12 md:h-12 flex-shrink-0 items-center justify-center rounded-full transition-all active:scale-95 relative group overflow-hidden ${isSparking ? 'bg-indigo-100' : 'bg-gradient-to-tr from-indigo-50 to-rose-50 text-indigo-500 hover:shadow-lg hover:shadow-indigo-500/20'}`}
           >
             <Sparkles size={18} className={`${isSparking ? 'animate-spin' : 'group-hover:scale-110 transition-transform'}`} />
             <div className="absolute inset-0 bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity" />
