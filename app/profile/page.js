@@ -13,6 +13,7 @@ import {
   Moon, Sun, Heart
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import LoadingScreen from '../components/LoadingScreen';
 
 
 export default function ProfilePage() {
@@ -37,6 +38,7 @@ export default function ProfilePage() {
   });
   const [history, setHistory] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const { isDarkMode } = useTheme();
 
@@ -97,6 +99,7 @@ export default function ProfilePage() {
           ]);
           setStats(await statsRes.json());
           setHistory(await historyRes.json());
+          setInitialDataLoaded(true);
         } catch (err) { console.error("Fetch Error:", err); } finally { setIsRefreshing(false); }
       };
       fetchData();
@@ -165,11 +168,7 @@ export default function ProfilePage() {
 
 
 
-  if (!isLoaded) return (
-    <div className={`h-screen flex items-center justify-center font-bold tracking-widest animate-pulse ${isDarkMode ? 'bg-[#0a0a0c] text-indigo-400' : 'bg-rose-50/20 text-rose-400'}`}>
-      Establishing Vibe Session...
-    </div>
-  );
+  if (!isLoaded || !initialDataLoaded) return <LoadingScreen message="Syncing your Profile..." />;
 
   const visibleHistory = (Array.isArray(history) && showAllHistory) ? history : (Array.isArray(history) ? history.slice(0, 3) : []);
 

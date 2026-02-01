@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useStatus } from '../context/StatusContext';
+import LoadingScreen from '../components/LoadingScreen';
 
 function Counter({ value }) {
   const count = useMotionValue(0);
@@ -195,13 +196,7 @@ export default function Dashboard() {
     return u.status?.toLowerCase().includes(filterTag.toLowerCase());
   });
 
-  if (loading) return (
-    <div className={`h-screen flex flex-col items-center justify-center transition-colors ${isDarkMode ? 'bg-[#0a0a0c]' : 'bg-rose-50/20'}`}>
-      <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
-        <Sparkles className="text-rose-400 w-10 h-10" />
-      </motion.div>
-    </div>
-  );
+  if (loading) return <LoadingScreen message="Establishing Vibe Session..." />;
 
   return (
     <div className={`min-h-screen relative pb-20 font-sans overflow-x-hidden transition-colors duration-500 ${isDarkMode ? 'bg-[#0a0a0c] text-white' : 'bg-rose-50/20 text-slate-900'}`}>

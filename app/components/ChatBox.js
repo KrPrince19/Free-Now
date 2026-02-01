@@ -242,6 +242,7 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
 
   const addEmoji = (emoji) => {
     setMessage(prev => prev + emoji);
+    setIsEmojiPickerOpen(false);
   };
 
   const handleEditMessage = (msg) => {
@@ -583,19 +584,17 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
                         <div className="flex items-center gap-2 py-2">
                           <Clock size={16} /> Snapshot Expired
                         </div>
-                      ) : viewingImageId === (msg.id || i) ? (
-                        <div className="relative">
-                          <img src={msg.text} alt="Snapshot" className="rounded-2xl max-w-full h-auto shadow-2xl" />
-                          <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-black px-2 py-1 rounded-full backdrop-blur-md">
-                            {secondsLeft}s
-                          </div>
-                        </div>
                       ) : (
                         <button
                           onClick={() => startImageTimer(msg.id || i)}
-                          className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all ${isMe ? 'bg-white/10 hover:bg-white/20' : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-600'}`}
+                          className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all ${isMe ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-600'}`}
                         >
-                          <Eye size={18} /> {isMe ? "Tap to Preview" : "Tap to View Snapshot"}
+                          {viewingImageId === (msg.id || i) ? (
+                            <Activity size={18} className="animate-pulse" />
+                          ) : (
+                            <Eye size={18} />
+                          )}
+                          {viewingImageId === (msg.id || i) ? "Viewing Now..." : isMe ? "Tap to Preview" : "Tap to View Snapshot"}
                         </button>
                       )
                     ) : (
@@ -814,6 +813,59 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
         )}
       </AnimatePresence>
 
+      {/* --- FULL SCREEN IMAGE MODAL (WhatsApp Style) --- */}
+      <AnimatePresence>
+        {viewingImageId !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-slate-950/95 backdrop-blur-2xl flex flex-col items-center justify-center p-4 md:p-8"
+          >
+            <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-50">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Snapshot Viewing</span>
+                <span className="text-white font-bold text-sm">Self-destructing in {imageTimers[viewingImageId]}s</span>
+              </div>
+              <button
+                onClick={() => setViewingImageId(null)}
+                className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all active:scale-90"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative max-w-5xl w-full flex items-center justify-center"
+            >
+              {(() => {
+                const msg = messages.find((m, idx) => (m.id || idx) === viewingImageId);
+                return msg ? (
+                  <img
+                    src={msg.text}
+                    alt="Full screen photo"
+                    className="max-h-[80vh] max-w-full rounded-2xl md:rounded-[2.5rem] shadow-[0_0_100px_rgba(99,102,241,0.2)] border border-white/10"
+                  />
+                ) : null;
+              })()}
+            </motion.div>
+
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xs px-6">
+              <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                <motion.div
+                  animate={{ width: `${((imageTimers[viewingImageId] || 10) / 10) * 100}%` }}
+                  transition={{ duration: 0.3, ease: "linear" }}
+                  className="h-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence >
+
       {/* --- PREMIUM INPUT AREA --- */}
       <div className="p-6 md:p-8 bg-white/60 border-t border-indigo-500/10 backdrop-blur-xl relative z-30">
 
@@ -865,7 +917,10 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
               >
                 <button
                   type="button"
-                  onClick={() => { setIsEmojiPickerOpen(!isEmojiPickerOpen); if (isMobileMenuOpen) setIsMobileMenuOpen(false); }}
+                  onClick={() => {
+                    setIsEmojiPickerOpen(!isEmojiPickerOpen);
+                    setIsMobileMenuOpen(false);
+                  }}
                   className={`w-10 h-10 md:w-12 md:h-12 flex-shrink-0 flex items-center justify-center rounded-full transition-all active:scale-95 ${isEmojiPickerOpen ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-400 hover:text-indigo-600'}`}
                 >
                   <Smile size={20} className="md:w-6 md:h-6" />
@@ -873,17 +928,27 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
 
                 <button
                   type="button"
-                  onClick={() => { handleSpark(); if (isMobileMenuOpen) setIsMobileMenuOpen(false); }}
+                  onClick={() => {
+                    handleSpark();
+                    setIsMobileMenuOpen(false);
+                    setIsEmojiPickerOpen(false);
+                  }}
                   disabled={isSparking || partnerDetails.left}
                   className={`flex w-10 h-10 md:w-12 md:h-12 flex-shrink-0 items-center justify-center rounded-full transition-all active:scale-95 relative group overflow-hidden ${isSparking ? 'bg-indigo-100' : 'bg-gradient-to-tr from-indigo-50 to-rose-50 text-indigo-500 hover:shadow-lg hover:shadow-indigo-500/20'}`}
                 >
-                  <Sparkles size={18} className={`${isSparking ? 'animate-spin' : 'group-hover:scale-110 transition-transform'}`} />
+                  <motion.div animate={isSparking ? { rotate: 360 } : {}} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
+                    <Sparkles size={18} className="group-hover:scale-110 transition-transform" />
+                  </motion.div>
                   <div className="absolute inset-0 bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => { fileInputRef.current.click(); if (isMobileMenuOpen) setIsMobileMenuOpen(false); }}
+                  onClick={() => {
+                    fileInputRef.current.click();
+                    setIsMobileMenuOpen(false);
+                    setIsEmojiPickerOpen(false);
+                  }}
                   disabled={partnerDetails.left}
                   className={`w-10 h-10 md:w-12 md:h-12 flex-shrink-0 flex items-center justify-center rounded-full transition-all active:scale-95 bg-gradient-to-tr from-rose-50 to-indigo-50 text-rose-500 hover:shadow-lg hover:shadow-rose-500/20`}
                 >
@@ -950,8 +1015,8 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
             <Clock size={12} className="text-rose-500" />
           </div>
         </div>
-      </div>
-    </motion.div>
+      </div >
+    </motion.div >
   );
 }
 

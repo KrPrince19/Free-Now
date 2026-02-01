@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { socket } from "../lib/socket";
 import { useTheme } from "../context/ThemeContext";
+import LoadingScreen from "../components/LoadingScreen";
 
 
 /* ================= COUNTER (ROLL-UP ANIMATION) ================= */
@@ -134,6 +135,7 @@ export default function LandingPage() {
   const [activeUsers, setActiveUsers] = useState([]);
   const [pulses, setPulses] = useState([]); // { id, x, y }
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [loading, setLoading] = useState(true);
   const { isDarkMode, updateVibeHue } = useTheme();
 
   /* ================= FETCH DATA ================= */
@@ -176,6 +178,8 @@ export default function LandingPage() {
         updateVibeHue(((activeData || []).length * 2) + (usersData || []).length);
       } catch (err) {
         console.error("Landing fetch error:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -242,6 +246,8 @@ export default function LandingPage() {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
+
+  if (loading) return <LoadingScreen message="Establishing Global Connection..." />;
 
   return (
     <div className={`min-h-screen font-sans transition-colors duration-500 overflow-x-hidden ${isDarkMode ? 'bg-[#0a0a0c] text-white' : 'bg-rose-50/10 text-slate-900'}`}>
