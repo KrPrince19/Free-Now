@@ -74,7 +74,15 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   // --- SOCKET LISTENERS ---
   useEffect(() => {
     socket.on('new-message', (msg) => {
-      setMessages((prev) => [...prev, msg]);
+      setMessages((prev) => {
+        // If it's an optimistic message coming back, replace it with server version
+        if (msg.clientId && prev.some(m => m.clientId === msg.clientId)) {
+          return prev.map(m => m.clientId === msg.clientId ? msg : m);
+        }
+        // Avoid duplicates
+        if (prev.some(m => m.id === msg.id)) return prev;
+        return [...prev, msg];
+      });
       setIsPartnerTyping(false);
     });
 
@@ -223,11 +231,29 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
     if (e) e.preventDefault();
     if ((!message.trim() && !stagedImage) || partnerDetails.left) return;
 
+    const clientId = `opt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const textContent = stagedImage || message.trim();
+    const msgType = stagedImage ? 'image' : 'text';
+
+    // Optimistic UI Update: Add to UI immediately
+    const optimisticMsg = {
+      id: clientId,
+      clientId: clientId,
+      text: textContent,
+      sender: currentUser,
+      type: msgType,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date(),
+      optimistic: true
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
+
     socket.emit('send-private-message', {
       roomId: chatData.roomId,
-      message: stagedImage || message.trim(),
+      message: textContent,
       senderName: currentUser,
-      type: stagedImage ? 'image' : 'text'
+      type: msgType,
+      clientId: clientId
     });
 
     // Stop typing immediately when message is sent
@@ -271,11 +297,44 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) return alert("Image too large! Max 2MB for vanishing snapshots.");
+
+    // We still keep a limit, but we compress everything
+    if (file.size > 5 * 1024 * 1024) return alert("Image too large! Max 5MB for vanishing snapshots.");
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setStagedImage(reader.result);
+      const img = new Image();
+      img.src = reader.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Smart Resize: Max 1200px width/height while maintaining aspect ratio
+        const MAX_DIM = 1200;
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height *= MAX_DIM / width;
+            width = MAX_DIM;
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width *= MAX_DIM / height;
+            height = MAX_DIM;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = "white"; // Handle PNG transparency
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Compress heavily for instant vibes (0.6 quality JPEG)
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        setStagedImage(compressedDataUrl);
+      };
     };
     reader.readAsDataURL(file);
     e.target.value = null; // Reset input

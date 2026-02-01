@@ -40,6 +40,15 @@ This file provides a structured overview of what has been implemented in the Fre
 ### Implementing Vibe-Based Discovery
 **How it is implemented**: We implemented a filtering engine that sorts the list of online users based on their selected "Vibe" category. This is done on the client side for instant results as users click through various vibe buttons.
 
+### Implementing WhatsApp-Style Full-Screen Image View
+**How it is implemented**: Replaced in-line image expansion with a dedicated full-screen modal overlay. It features a blurred background, a reactive countdown progress bar, and a pulse feedback state ("Viewing Now...") in the chat bubble to signify active interaction.
+
+### Implementing Auto-Closing Mobile Menus & Emoji Picker
+**How it is implemented**: Refined the chat input logic to automatically close the expanded mobile menu (+) and the emoji picker as soon as an option or emoji is selected. This ensures a clean workspace on mobile devices and prevents overlapping UI elements.
+
+### Implementing Premium Global Loading Animations
+**How it is implemented**: Created a high-end `LoadingScreen` component that manages the initial data fetch states for Landing, Dashboard, and Profile pages. It uses Framer Motion for background orb animations, glassmorphism icons, and shimmering text to provide a sophisticated first-visit experience.
+
 ### Implementing High-Performance Sonar Map (Radar)
 **How it is implemented**: A custom SVG-based radar component was built to visualize the community. It merges data from both individual active users and matched chat pairs, rendering pulses at calculated coordinates to show a 100% accurate live map.
 
@@ -57,6 +66,12 @@ This file provides a structured overview of what has been implemented in the Fre
 
 ### Implementing Terms & Privacy Governance
 **How it is implemented**: We consolidated all rules and privacy policies into a single, premium `/terms` page. This ensures transparency regarding our 5-second grace period and zero-logging commitment, all accessible via a unified footer link.
+
+### Implementing Client-Side Image Compression
+**How it is implemented**: Developed an on-the-fly compression engine using the Canvas API. When a user selects an image, it is automatically resized (max 1200px) and resampled at 0.6 quality before being staged. This reduces payload sizes by up to 95%, making image sending significantly faster.
+
+### Implementing Optimistic UI for Instant Feedback
+**How it is implemented**: Re-engineered the messaging flow to use `clientId` tracking. Messages and images are added to the local UI state immediately upon clicking "Send," while the network request happens in the background. The UI then elegantly replaces the local copy with the server-verified version once the broadcast returns, providing an "instant" feel regardless of network latency.
 
 ---
 
