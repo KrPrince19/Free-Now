@@ -73,6 +73,12 @@ This file provides a structured overview of what has been implemented in the Fre
 ### Implementing Optimistic UI for Instant Feedback
 **How it is implemented**: Re-engineered the messaging flow to use `clientId` tracking. Messages and images are added to the local UI state immediately upon clicking "Send," while the network request happens in the background. The UI then elegantly replaces the local copy with the server-verified version once the broadcast returns, providing an "instant" feel regardless of network latency.
 
+### Implementing Anti-Duplication & Session Takeover
+**How it is implemented**: Fixed message duplication using a three-pronged approach: 
+1. **Frontend Locking**: Added an `isSending` lock that throttles combined text/image submits to prevent rapid double-clicks.
+2. **Backend Takeover**: The server now automatically disconnects older socket connections when a new session is established for the same ID, ensuring exactly one active listener per user.
+3. **Smart Deduplication**: Improved the `new-message` listener with a `ref` Set (`processedClientIds`) to guarantee each transmission is only rendered once.
+
 ---
 
 ## 📱 Design Aesthetics

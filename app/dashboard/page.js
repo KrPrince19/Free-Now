@@ -258,7 +258,13 @@ export default function Dashboard() {
       </AnimatePresence>
 
       {activeChat && (
-        <ChatBox chatData={activeChat} currentUser={user?.username || user?.firstName} sessionId={sessionId} onClose={() => { setActiveChat(null); localStorage.removeItem('activeChat'); }} />
+        <ChatBox
+          key={activeChat.roomId}
+          chatData={activeChat}
+          currentUser={user?.username || user?.firstName}
+          sessionId={sessionId}
+          onClose={() => { setActiveChat(null); localStorage.removeItem('activeChat'); }}
+        />
       )}
 
       <div className="relative z-10">

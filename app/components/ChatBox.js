@@ -56,6 +56,8 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   const [showMissAnimation, setShowMissAnimation] = useState(false);
   const [activeReactions, setActiveReactions] = useState([]); // Array of { id, x, y, emoji }
   const [isDoodleOpen, setIsDoodleOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const processedClientIds = useRef(new Set());
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const drawingContextRef = useRef(null);
@@ -74,14 +76,33 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   // --- SOCKET LISTENERS ---
   useEffect(() => {
     socket.on('new-message', (msg) => {
+      // Security: Only process if it belongs to this specific room instance
+      if (msg.roomId && msg.roomId !== chatData.roomId) return;
+
       setMessages((prev) => {
-        // If it's an optimistic message coming back, replace it with server version
-        if (msg.clientId && prev.some(m => m.clientId === msg.clientId)) {
-          return prev.map(m => m.clientId === msg.clientId ? msg : m);
-        }
-        // Avoid duplicates
+        // 1. GLOBAL DEDUPLICATION: Has this clientId or ID been seen?
+        if (msg.clientId && processedClientIds.current.has(msg.clientId)) return prev;
         if (prev.some(m => m.id === msg.id)) return prev;
-        return [...prev, msg];
+
+        // Ensure we have a formatted local time for the bubble
+        const localTime = new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const finalMsg = { ...msg, time: localTime };
+
+        // 2. REPLACEMENT: Is there an optimistic placeholder?
+        if (msg.clientId) {
+          const optIndex = prev.findIndex(m => m.clientId === msg.clientId);
+          if (optIndex !== -1) {
+            processedClientIds.current.add(msg.clientId);
+            const newList = [...prev];
+            newList[optIndex] = finalMsg;
+            return newList;
+          }
+          // Mark as processed even if no optimistic found (e.g. from partner)
+          processedClientIds.current.add(msg.clientId);
+        }
+
+        // 3. ADDITION: Regular append
+        return [...prev, finalMsg];
       });
       setIsPartnerTyping(false);
     });
@@ -229,41 +250,61 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
 
   const handleSendMessage = (e) => {
     if (e) e.preventDefault();
-    if ((!message.trim() && !stagedImage) || partnerDetails.left) return;
+    if ((!message.trim() && !stagedImage) || partnerDetails.left || isSending) return;
 
-    const clientId = `opt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const textContent = stagedImage || message.trim();
-    const msgType = stagedImage ? 'image' : 'text';
-
-    // Optimistic UI Update: Add to UI immediately
-    const optimisticMsg = {
-      id: clientId,
-      clientId: clientId,
-      text: textContent,
-      sender: currentUser,
-      type: msgType,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      timestamp: new Date(),
-      optimistic: true
-    };
-    setMessages(prev => [...prev, optimisticMsg]);
-
-    socket.emit('send-private-message', {
-      roomId: chatData.roomId,
-      message: textContent,
-      senderName: currentUser,
-      type: msgType,
-      clientId: clientId
-    });
-
-    // Stop typing immediately when message is sent
-    socket.emit('stop-typing', { roomId: chatData.roomId });
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-
+    setIsSending(true);
+    // Capture current states and clear immediately
+    const currentText = message.trim();
+    const currentImage = stagedImage;
     setMessage("");
     setStagedImage(null);
     setIsEmojiPickerOpen(false);
     setIsMobileMenuOpen(false);
+
+    // Function to send a single message (optimistic + socket)
+    const sendPayload = (content, type) => {
+      const clientId = `opt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      console.log("🚀 Sending payload type:", type, "| clientId:", clientId);
+
+      const optimisticMsg = {
+        id: clientId,
+        clientId: clientId,
+        text: content,
+        sender: currentUser,
+        type: type,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date(),
+        optimistic: true
+      };
+
+      setMessages(prev => {
+        console.log("✨ Adding optimistic message to state:", clientId);
+        return [...prev, optimisticMsg];
+      });
+
+      socket.emit('send-private-message', {
+        roomId: chatData.roomId,
+        message: content,
+        senderName: currentUser,
+        type: type,
+        clientId: clientId
+      });
+    };
+
+    // If both exist, send them as two separate instant messages
+    if (currentImage) {
+      sendPayload(currentImage, 'image');
+    }
+    if (currentText) {
+      sendPayload(currentText, 'text');
+    }
+
+    // Stop typing immediately
+    socket.emit('stop-typing', { roomId: chatData.roomId });
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    // Release lock after small delay to ensure states settled
+    setTimeout(() => setIsSending(false), 500);
   };
 
   const addEmoji = (emoji) => {
