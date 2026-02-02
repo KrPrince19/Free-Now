@@ -239,7 +239,13 @@ export default function LandingPage() {
       setActiveUsers(users || []);
     });
 
-    return () => { socket.off(); };
+    return () => {
+      socket.off('midnight-update');
+      socket.off('month-reset');
+      socket.off('conversation-started');
+      socket.off('conversation-ended');
+      socket.off('users-update');
+    };
   }, []);
 
   useEffect(() => {

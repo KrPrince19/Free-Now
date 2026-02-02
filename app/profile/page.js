@@ -129,7 +129,12 @@ export default function ProfilePage() {
 
       return () => {
         socket.off('connect', handleRegister);
-        socket.off();
+        socket.off('receive-chat-request');
+        socket.off('request-expired');
+        socket.off('request-ignored');
+        socket.off('request-rejected');
+        socket.off('chat-started');
+        socket.off('chat-init-receiver');
       };
     }
   }, [isLoaded, sessionId, activeChat, user]);

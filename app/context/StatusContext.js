@@ -55,8 +55,15 @@ export const StatusProvider = ({ children }) => {
     }
   };
 
+  const handleSetStatusText = (text) => {
+    setStatusText(text);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('vibe_statusText', text);
+    }
+  };
+
   return (
-    <StatusContext.Provider value={{ isFree, statusText, setStatusText, toggleStatus }}>
+    <StatusContext.Provider value={{ isFree, statusText, setStatusText: handleSetStatusText, toggleStatus }}>
       {children}
     </StatusContext.Provider>
   );

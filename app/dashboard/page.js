@@ -257,9 +257,9 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      {activeChat && (
+      {activeChat && user && (
         <ChatBox
-          key={activeChat.roomId}
+          key={activeChat.roomId + "-v6"}
           chatData={activeChat}
           currentUser={user?.username || user?.firstName}
           sessionId={sessionId}
