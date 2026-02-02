@@ -10,10 +10,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, CheckCircle2,
   Sparkles, Coffee, BellRing, Clock, Zap, MessageSquare, ShieldCheck, XCircle,
-  Moon, Sun, Heart
+  Moon, Sun, Heart, Lock, Crown
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import LoadingScreen from '../components/LoadingScreen';
+const PREMIUM_VIBES = [
+  { text: "Coffee & Code ☕", premium: false },
+  { text: "Just Chilling 🌊", premium: false },
+  { text: "Lofi Beats 🎧", premium: false },
+  { text: "VIP Lounge 👑", premium: true },
+  { text: "Zen Master 🧘", premium: true },
+  { text: "Midnight Marauder 🌙", premium: true },
+  { text: "Elite Vibing 🚀", premium: true },
+];
 
 
 export default function ProfilePage() {
@@ -177,6 +186,33 @@ export default function ProfilePage() {
     setIncomingRequest(null);
   };
 
+  // 💰 MOCK PAYMENT: Simulates a successful checkout for development
+  const handleSimulatePayment = async () => {
+    if (!user || !sessionId) return;
+
+    try {
+      showToast("Processing simulation...", "info");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mock-payment-success`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.primaryEmailAddress?.emailAddress,
+          sessionId: sessionId
+        })
+      });
+
+      if (res.ok) {
+        showToast("Welcome to Elite Status! 👑", "info");
+        // NOTE: StatusContext handles the real-time UI shift via Socket
+      } else {
+        showToast("Simulation failed. Check backend logs.", "error");
+      }
+    } catch (err) {
+      console.error("Payment Simulation Error:", err);
+      showToast("Network error during simulation.", "error");
+    }
+  };
+
 
 
   if (!isLoaded || !initialDataLoaded) return <LoadingScreen message="Syncing your Profile..." />;
@@ -308,7 +344,7 @@ export default function ProfilePage() {
             ))}
           </div>
 
-          <div className="relative inline-block mb-6 pt-4">
+          <div className="relative inline-block mb-3 pt-4">
             <div className={`absolute inset-0 blur-[40px] rounded-full scale-110 ${isDarkMode ? 'bg-indigo-500/20' : 'bg-rose-500/10'}`} />
             <motion.div whileHover={{ scale: 1.05, rotate: 2 }} className="relative w-32 h-32 bg-gradient-to-br from-indigo-500 via-purple-500 to-rose-500 p-[3px] rounded-[2.5rem] shadow-2xl cursor-pointer">
               <div className={`w-full h-full rounded-[2.35rem] flex items-center justify-center text-4xl font-black group/avatar overflow-hidden ${isDarkMode ? 'bg-[#0a0a0c] text-white' : 'bg-white text-slate-800'}`}>
@@ -320,8 +356,22 @@ export default function ProfilePage() {
               <div className={`w-1.5 h-1.5 rounded-full ${isFree ? 'bg-white animate-pulse' : 'bg-white/20'}`} />
             </div>
           </div>
-          <h1 className={`text-4xl font-black tracking-tight mb-2 relative z-10 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{user?.username || user?.firstName}</h1>
-          <p className={`font-medium text-sm tracking-wide mb-6 relative z-10 ${isDarkMode ? 'text-white/40' : 'text-slate-400'}`}>@{user?.username || user?.firstName}</p>
+          <h1 className={`text-4xl font-black tracking-tight mb-2 relative z-10 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+            {user?.username || user?.firstName}
+            {usage.isPremium && <Crown className="inline-block ml-3 text-amber-400 fill-amber-400" size={24} />}
+          </h1>
+          <p className={`font-medium text-sm tracking-wide mb-6 relative z-10 ${isDarkMode ? 'text-white/40' : 'text-slate-400'}`}>
+            {usage.isPremium ? '👑 Premium Member' : `@${user?.username || user?.firstName}`}
+          </p>
+
+          {usage.isPremium && usage.premiumUntil && (
+            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className={`mb-6 p-3 rounded-2xl border flex items-center justify-center gap-2 mx-auto w-fit ${isDarkMode ? 'bg-amber-500/5 border-amber-500/20 text-amber-500/80' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
+              <Clock size={14} />
+              <p className="text-[10px] font-black uppercase tracking-widest">
+                Elite status valid until: {new Date(usage.premiumUntil).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
+              </p>
+            </motion.div>
+          )}
 
           <div className="flex justify-center gap-3">
             <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-white/5 border-white/10 text-indigo-400' : 'bg-indigo-50 border-indigo-100 text-indigo-600'}`}>
@@ -331,6 +381,27 @@ export default function ProfilePage() {
               {isFree ? "Live Now" : "Invisible"}
             </div>
           </div>
+
+          {/* 💎 ELITE UPGRADE: Re-positioned for better visibility & responsiveness */}
+          {!usage.isPremium && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleSimulatePayment}
+              className={`mt-8 w-full sm:w-auto relative px-8 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all shadow-xl overflow-hidden group/elite ${isDarkMode
+                ? 'bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 text-black'
+                : 'bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 text-white'
+                }`}
+            >
+              <span className="relative z-10 flex items-center justify-center gap-3">
+                <Crown size={16} className={isDarkMode ? "" : "fill-white"} />
+                Join the Elite Club
+              </span>
+              <div className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover/elite:translate-x-[100%] transition-transform duration-700 skew-x-[-20deg]" />
+              {/* Pulsing Outer Glow */}
+              <div className="absolute inset-0 rounded-[1.5rem] shadow-[0_0_20px_rgba(251,191,36,0.5)] animate-pulse" />
+            </motion.button>
+          )}
         </section>
 
         {/* --- AVAILABILITY INTERFACE --- */}
@@ -357,6 +428,7 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
+
               <button
                 onClick={() => toggleStatus(!isFree, statusText)}
                 className={`w-14 h-8 rounded-full transition-all duration-500 relative ${isFree ? 'bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.4)]' : isDarkMode ? 'bg-white/5' : 'bg-slate-200 shadow-inner'}`}
@@ -364,7 +436,7 @@ export default function ProfilePage() {
                 <motion.div animate={{ x: isFree ? 24 : 4 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} className="absolute top-1 bg-white w-6 h-6 rounded-full shadow-lg" />
               </button>
             </div>
-            <div className="relative group/input">
+            <div className="relative group/input mb-6">
               <input
                 type="text"
                 placeholder="Drop a vibe status..."
@@ -376,6 +448,29 @@ export default function ProfilePage() {
                   } ${isFree ? 'opacity-40 cursor-not-allowed' : ''}`}
               />
               <Coffee className={`absolute right-6 top-5 transition-colors ${isFree ? 'text-indigo-400' : 'text-slate-300'}`} size={24} />
+            </div>
+
+            {/* 💎 PREMIUM: Exclusive Vibe Suggestions */}
+            <div className="flex flex-wrap gap-2">
+              {PREMIUM_VIBES.map((vibe, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    if (vibe.premium && !usage.isPremium) return showToast("Premium vibes are for 💎 Elite members!", "error");
+                    if (!isFree) setStatusText(vibe.text);
+                  }}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${statusText === vibe.text
+                    ? 'bg-indigo-500 border-indigo-500 text-white shadow-lg'
+                    : isDarkMode
+                      ? 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'
+                      : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'
+                    } ${vibe.premium && !usage.isPremium ? 'opacity-60 cursor-not-allowed' : ''}`}
+                >
+                  {vibe.text}
+                  {vibe.premium && !usage.isPremium && <Lock size={10} />}
+                  {vibe.premium && usage.isPremium && <Crown size={10} className="text-amber-400 fill-amber-400" />}
+                </button>
+              ))}
             </div>
           </div>
         </section>

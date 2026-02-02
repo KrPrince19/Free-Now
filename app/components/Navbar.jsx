@@ -5,12 +5,15 @@ import { Home, RefreshCw, User, Sun, Moon, Menu, X } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
+import { useStatus } from '../context/StatusContext';
+import { Crown } from 'lucide-react';
 
 const Navbar = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // 🧭 ROUTE TRACKING: Get current URL path to dynamically highlight active navigation links
   const pathname = usePathname();
+  const { usage } = useStatus();
 
   return (
     <nav className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors duration-500 px-6 py-4 ${isDarkMode ? 'bg-[#0a0a0c]/80 border-white/10' : 'bg-white/80 border-slate-100'
@@ -23,6 +26,7 @@ const Navbar = () => {
             <span className="text-white font-black text-xl italic">F</span>
           </div>
           <h1 className={`text-xl font-bold tracking-tight leading-none ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>FreeNow</h1>
+          {usage.isPremium && <Crown size={14} className="text-amber-400 fill-amber-400 -mt-1" />}
         </Link>
 
         {/* Navigation Actions */}
@@ -67,8 +71,17 @@ const Navbar = () => {
                 ? (isDarkMode ? 'border-indigo-500/50 bg-indigo-500/10' : 'border-indigo-200 bg-indigo-50')
                 : (isDarkMode ? 'bg-white/5 border-white/10 hover:border-rose-500/50 hover:bg-rose-500/5' : 'bg-white border-slate-200 hover:border-rose-200 hover:bg-rose-50')
                 }`} title="Profile">
-                <div className="w-8 h-8 bg-gradient-to-tr from-rose-400 to-indigo-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
+                <div className={`w-8 h-8 bg-gradient-to-tr from-rose-400 to-indigo-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center relative`}>
                   <User size={16} className="text-white" />
+                  {usage.isPremium && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm"
+                    >
+                      <Crown size={8} className="text-amber-500 fill-amber-500" />
+                    </motion.div>
+                  )}
                 </div>
               </button>
             </Link>

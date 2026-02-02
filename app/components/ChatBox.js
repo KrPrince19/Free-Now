@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '../lib/socket';
-import { Send, X, ShieldCheck, Clock, Smile, Sparkles, Heart, Zap, User, Edit2, Trash2, Copy, Check, Camera, Eye, AlertCircle, Activity, Pencil, RotateCcw, Plus } from 'lucide-react';
+import { Send, X, ShieldCheck, Clock, Smile, Sparkles, Heart, Zap, User, Edit2, Trash2, Copy, Check, Camera, Eye, AlertCircle, Activity, Pencil, RotateCcw, Plus, Download, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useStatus } from '../context/StatusContext';
 
 const CURATED_EMOJIS = ["❤️", "✨", "😂", "😍", "🔥", "🙌", "🥂", "🌟", "🌸", "🦋", "🍭", "🧸", "🦄", "🌈"];
 const ICEBREAKERS = [
@@ -32,7 +33,11 @@ const CHAT_VERSION = "6.1-STABLE";
 
 export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   console.log("🛠️ ChatBox Mounted | Version:", CHAT_VERSION);
+  const { usage } = useStatus();
   const [message, setMessage] = useState("");
+  const [viewingImageId, setViewingImageId] = useState(null);
+  const [imageTimers, setImageTimers] = useState({});
+  const [keptSnapshots, setKeptSnapshots] = useState([]); // 💎 PREMIUM: Local session vault
   const [messages, setMessages] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(`chat_messages_${chatData.roomId}`);
@@ -56,8 +61,6 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   const [editingMessage, setEditingMessage] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [isSparking, setIsSparking] = useState(false);
-  const [viewingImageId, setViewingImageId] = useState(null);
-  const [imageTimers, setImageTimers] = useState({});
   const [stagedImage, setStagedImage] = useState(null);
   const [isGameOpen, setIsGameOpen] = useState(false);
   const [gameState, setGameState] = useState(null);
@@ -341,12 +344,22 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   const startImageTimer = (msgId) => {
     if (imageTimers[msgId]) return;
     setViewingImageId(msgId);
-    setImageTimers(prev => ({ ...prev, [msgId]: 10 }));
+
+    // 💎 PREMIUM: Extended timer (30s) for premium accounts, 10s for regular
+    const duration = usage.isPremium ? 30 : 10;
+    setImageTimers(prev => ({ ...prev, [msgId]: duration }));
+
     const timer = setInterval(() => {
       setImageTimers(prev => {
-        const next = (prev[msgId] || 10) - 1;
+        const currentVal = prev[msgId];
+        if (currentVal === undefined) { clearInterval(timer); return prev; }
+
+        const next = currentVal - 1;
         if (next <= 0) {
           clearInterval(timer);
+          // 💎 PREMIUM: If the image was "Kept", don't expire it from view
+          if (keptSnapshots.includes(msgId)) return { ...prev, [msgId]: 0 };
+
           setViewingImageId(null);
           setMessages(mPrev => mPrev.map((m) => (m.clientId || m.id) === msgId ? { ...m, expired: true, text: "Snapshot Expired" } : m));
           return { ...prev, [msgId]: 0 };
@@ -354,6 +367,12 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
         return { ...prev, [msgId]: next };
       });
     }, 1000);
+  };
+
+  const keepSnapshot = (msgId) => {
+    if (!usage.isPremium) return alert("Upgrade to Premium to keep snapshots!");
+    setKeptSnapshots(prev => [...prev, msgId]);
+    // Optionally also save to a persistent "Vault" collection if needed in future
   };
 
   const handleSpark = () => {
@@ -563,8 +582,31 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
       <AnimatePresence>
         {viewingImageId !== null && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-slate-950/95 backdrop-blur-2xl flex flex-col items-center justify-center p-4 md:p-8">
-            <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-50"><div className="flex flex-col"><span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Snapshot Viewing</span><span className="text-white font-bold text-sm">Self-destructing in {imageTimers[viewingImageId]}s</span></div><button onClick={() => setViewingImageId(null)} className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full transition-all"><X size={24} /></button></div>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative max-w-5xl w-full flex items-center justify-center">{(() => { const msg = messages.find((m) => (m.clientId || m.id) === viewingImageId); return msg ? <img src={msg.text} className="max-h-[80vh] max-w-full rounded-2xl md:rounded-[2.5rem] shadow-2xl border border-white/10" /> : null; })()}</motion.div>
+            <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-50">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Snapshot Viewing</span>
+                <span className="text-white font-bold text-sm">Self-destructing in {imageTimers[viewingImageId]}s</span>
+              </div>
+              <div className="flex gap-4 w-full">
+                {/* 💎 PREMIUM: Keep Snapshot button */}
+                {usage.isPremium && !keptSnapshots.includes(viewingImageId) && (
+                  <button
+                    onClick={() => keepSnapshot(viewingImageId)}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl shadow-indigo-600/20"
+                  >
+                    <Download size={18} />
+                    Keep to Vault
+                  </button>
+                )}
+                <button
+                  onClick={() => setViewingImageId(null)}
+                  className={`${usage.isPremium && !keptSnapshots.includes(viewingImageId) ? 'flex-1' : 'w-full'} bg-white/10 hover:bg-white/20 text-white font-black py-4 rounded-2xl transition-all border border-white/10`}
+                >
+                  {keptSnapshots.includes(viewingImageId) ? "Close Vault View" : "Close Snapshot"}
+                </button>
+              </div>
+            </div>
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ scale: 1, opacity: 1 }} className="relative max-w-5xl w-full flex items-center justify-center">{(() => { const msg = messages.find((m) => (m.clientId || m.id) === viewingImageId); return msg ? <img src={msg.text} className="max-h-[80vh] max-w-full rounded-2xl md:rounded-[2.5rem] shadow-2xl border border-white/10" /> : null; })()}</motion.div>
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xs px-6"><div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><motion.div animate={{ width: `${((imageTimers[viewingImageId] || 10) / 10) * 100}%` }} className="h-full bg-indigo-500" /></div></div>
           </motion.div>
         )}

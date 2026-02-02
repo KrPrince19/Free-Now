@@ -7,7 +7,7 @@ import { useUser, useAuth } from "@clerk/nextjs";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
 import {
   Sparkles, MessageCircle, Coffee, Zap, BellRing,
-  Trophy, Clock, Heart, Globe
+  Trophy, Clock, Heart, Globe, Crown
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useStatus } from '../context/StatusContext';
@@ -242,20 +242,39 @@ export default function Dashboard() {
 
       <AnimatePresence>
         {incomingRequest && (
-          <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }} className={`fixed bottom-10 left-6 right-6 z-50 p-6 rounded-[2.5rem] shadow-2xl border-2 flex flex-col gap-4 overflow-hidden backdrop-blur-2xl ${isDarkMode ? 'bg-[#1a1a1f]/90 border-white/10' : 'bg-slate-900 border-transparent text-white'}`}>
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className={`fixed bottom-10 left-6 right-6 z-50 p-6 rounded-[2.5rem] shadow-2xl border-2 flex flex-col gap-4 overflow-hidden backdrop-blur-2xl ${incomingRequest.isPriority ? 'bg-indigo-950/90 border-indigo-400/50 text-white ring-4 ring-indigo-500/20' : isDarkMode ? 'bg-[#1a1a1f]/90 border-white/10' : 'bg-slate-900 border-transparent text-white'}`}
+          >
+            {/* 💎 PREMIUM: Priority Glow Effect */}
+            {incomingRequest.isPriority && (
+              <motion.div
+                animate={{ opacity: [0.1, 0.3, 0.1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-indigo-500/20 pointer-events-none"
+              />
+            )}
             <div className="flex items-center justify-between relative z-10">
               <div className="flex items-center gap-4">
-                <div className="bg-rose-500 p-3 rounded-2xl animate-pulse"><BellRing size={20} className="text-white" /></div>
+                <div className={`${incomingRequest.isPriority ? 'bg-indigo-500' : 'bg-rose-500'} p-3 rounded-2xl animate-pulse`}>
+                  {incomingRequest.isPriority ? <Crown size={20} className="text-white" /> : <BellRing size={20} className="text-white" />}
+                </div>
                 <div>
-                  <p className="text-xs font-black text-rose-400 uppercase tracking-widest">Incoming Vibe</p>
+                  <p className={`text-xs font-black uppercase tracking-widest ${incomingRequest.isPriority ? 'text-amber-400' : 'text-rose-400'}`}>
+                    {incomingRequest.isPriority ? '👑 Priority Vibe' : 'Incoming Vibe'}
+                  </p>
                   <p className="font-bold text-lg text-white">{incomingRequest.senderName} wants to chat!</p>
                 </div>
               </div>
-              <div className="bg-white/5 px-3 py-1 rounded-full text-xs font-mono font-bold text-rose-400 border border-white/5">00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}</div>
+              <div className={`bg-white/5 px-3 py-1 rounded-full text-xs font-mono font-bold border border-white/5 ${incomingRequest.isPriority ? 'text-indigo-300' : 'text-rose-400'}`}>
+                00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}
+              </div>
             </div>
             <div className="flex gap-2 relative z-10">
               <button onClick={handleIgnoreRequest} className={`flex-1 px-4 py-3 rounded-2xl text-sm font-bold ${isDarkMode ? 'bg-white/5 text-white/40' : 'bg-white/5 text-slate-400'}`}>Pass</button>
-              <button onClick={handleAcceptRequest} className="flex-[2] bg-rose-500 text-white px-6 py-3 rounded-2xl text-sm font-black shadow-lg">Accept vibe</button>
+              <button onClick={handleAcceptRequest} className={`${incomingRequest.isPriority ? 'bg-indigo-600' : 'bg-rose-500'} text-white px-6 py-3 rounded-2xl text-sm font-black shadow-lg`}>Accept vibe</button>
             </div>
           </motion.div>
         )}
@@ -320,11 +339,25 @@ export default function Dashboard() {
             <AnimatePresence mode="popLayout">
               {filteredUsers.length > 0 ? (
                 filteredUsers.map((u) => (
-                  <motion.div key={u.id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl transition-all border group hover:scale-[1.02] ${isDarkMode ? 'bg-[#111116] border-white/5 shadow-black/20' : 'bg-white border-slate-50'}`}>
+                  <motion.div key={u.id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl transition-all border group hover:scale-[1.02] ${isDarkMode ? 'bg-[#111116] border-white/5 shadow-black/20' : 'bg-white border-slate-50'} ${u.isPremium ? 'border-indigo-500/30 ring-1 ring-indigo-500/10' : ''}`}>
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-gradient-to-tr from-indigo-500 to-rose-500 rounded-2xl flex items-center justify-center text-white text-lg font-black shadow-lg shadow-indigo-500/20">{u.name ? u.name[0] : "?"}</div>
+                      {/* 💎 PREMIUM: Golden/Indigo Glowing Ring for Premium Avatars */}
+                      <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center text-white text-lg font-black shadow-lg ${u.isPremium ? 'bg-gradient-to-tr from-indigo-600 to-purple-600 ring-4 ring-indigo-500/20 shadow-indigo-500/40' : 'bg-gradient-to-tr from-indigo-500 to-rose-500 shadow-indigo-500/20'}`}>
+                        {u.name ? u.name[0] : "?"}
+                        {u.isPremium && (
+                          <motion.div
+                            animate={{ opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className="absolute -inset-1 rounded-2xl border-2 border-indigo-400/30 blur-sm"
+                          />
+                        )}
+                      </div>
                       <div>
-                        <h4 className={`font-black text-base ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{u.name}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className={`font-black text-base ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{u.name}</h4>
+                          {/* 💎 PREMIUM: Crown Badge for Premium Accounts */}
+                          {u.isPremium && <Crown size={14} className="text-amber-400 fill-amber-400" />}
+                        </div>
                         <div className="flex items-center gap-1 text-xs font-bold bg-gradient-to-r from-indigo-500 to-rose-500 bg-clip-text text-transparent italic mt-1"><Coffee size={14} className="text-rose-400" /> "{u.status}"</div>
                       </div>
                     </div>
