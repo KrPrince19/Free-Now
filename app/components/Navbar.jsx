@@ -96,7 +96,7 @@ const Navbar = () => {
           >
             <Link href="/" onClick={() => setIsMenuOpen(false)}>
               <button className={`flex items-center gap-4 w-full px-5 py-3 rounded-xl transition-all font-bold text-sm ${pathname === '/'
-                ? (isDarkMode ? 'bg-indigo-600/20 text-indigo-400' : 'bg-indigo-50 text-indigo-600')
+                ? (isDarkMode ? 'bg-indigo-600/20 text-indigo-300' : 'bg-indigo-50 text-indigo-600')
                 : (isDarkMode ? 'text-white/70 hover:bg-white/5 hover:text-white' : 'text-slate-600 hover:bg-white hover:text-indigo-600')
                 }`}>
                 <Home size={18} /> Home
@@ -104,15 +104,15 @@ const Navbar = () => {
             </Link>
             <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
               <button className={`flex items-center gap-4 w-full px-5 py-3 rounded-xl transition-all font-bold text-sm ${pathname === '/dashboard'
-                ? (isDarkMode ? 'bg-indigo-600/20 text-indigo-400' : 'bg-indigo-600/30')
-                : (isDarkMode ? 'bg-indigo-50 text-indigo-600' : 'bg-indigo-50 text-indigo-600 hover:bg-white')
+                ? (isDarkMode ? 'bg-indigo-600/20 text-indigo-300' : 'bg-indigo-50 text-indigo-600')
+                : (isDarkMode ? 'text-white/70 hover:bg-white/5 hover:text-white' : 'text-slate-600 hover:bg-white hover:text-indigo-600')
                 }`}>
                 <RefreshCw size={18} /> Sync
               </button>
             </Link>
             <Link href="/profile" onClick={() => setIsMenuOpen(false)}>
               <button className={`flex items-center gap-4 w-full px-5 py-3 rounded-xl transition-all font-bold text-sm ${pathname === '/profile'
-                ? (isDarkMode ? 'bg-indigo-600/20 text-indigo-400' : 'bg-indigo-50 text-indigo-600')
+                ? (isDarkMode ? 'bg-indigo-600/20 text-indigo-300' : 'bg-indigo-50 text-indigo-600')
                 : (isDarkMode ? 'text-white/70 hover:bg-white/5 hover:text-white' : 'text-slate-600 hover:bg-white hover:text-rose-600')
                 }`}>
                 <div className="w-8 h-8 bg-gradient-to-tr from-rose-400 to-indigo-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
