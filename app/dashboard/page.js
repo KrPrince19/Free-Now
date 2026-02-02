@@ -28,7 +28,7 @@ function Counter({ value }) {
 export default function Dashboard() {
   const { user } = useUser();
   const { sessionId } = useAuth();
-  const { statusText, toggleStatus } = useStatus();
+  const { statusText, toggleStatus, usage } = useStatus();
   const [nearbyUsers, setNearbyUsers] = useState([]);
   const [filterTag, setFilterTag] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -115,7 +115,10 @@ export default function Dashboard() {
     socket.on('receive-chat-request', (data) => { setIncomingRequest(data); setTimeLeft(15); });
     socket.on('request-expired', () => setIncomingRequest(null));
     socket.on('request-ignored', (data) => showToast(data.message, "timeout", false));
-    socket.on('request-failed', (data) => showToast(data.message, "reject", false));
+    // 💰 MONETIZATION: Alert the user when their daily vibe request limit (5) is reached
+    socket.on('request-failed', (data) => showToast(data.message, data.limitReached ? "reject" : "reject", data.limitReached));
+    // 🛡️ USAGE LIMIT: Respond to global daily activity caps (Requests or Status Toggles)
+    socket.on('limit-reached', (data) => showToast(data.message, "reject", true));
     socket.on('request-rejected', (data) => showToast(data.message, "reject", true));
     socket.on('request-sent-success', () => showToast("Vibe check sent! ✨", "success", false));
     socket.on('chat-started', (data) => {
@@ -141,6 +144,7 @@ export default function Dashboard() {
       socket.off('request-expired');
       socket.off('request-ignored');
       socket.off('request-failed');
+      socket.off('limit-reached');
       socket.off('request-rejected');
       socket.off('request-sent-success');
       socket.off('chat-started');
@@ -282,7 +286,25 @@ export default function Dashboard() {
           </motion.div>
 
           <div className="flex items-center justify-between mb-8">
-            <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>People Active Now</h3>
+            <div className="flex flex-col gap-1">
+              <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>People Active Now</h3>
+              {/* 💰 USAGE COUNTERS: Display remaining daily limits or Premium status */}
+              {usage.isPremium ? (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 w-fit">
+                  <div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
+                  <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Unlimited Vibe (Premium)</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-0.5">
+                  <p className={`text-[9px] font-black uppercase tracking-widest ${isDarkMode ? 'text-indigo-400/60' : 'text-indigo-600/60'}`}>
+                    Vibe Pings Left: {Math.max(0, 5 - (usage.requestsToday || 0))}
+                  </p>
+                  <p className={`text-[9px] font-black uppercase tracking-widest ${isDarkMode ? 'text-rose-400/60' : 'text-rose-600/60'}`}>
+                    Visibility Toggles Left: {Math.max(0, 3 - (usage.goFreeToday || 0))}
+                  </p>
+                </div>
+              )}
+            </div>
             <span className={`flex items-center gap-2 text-[10px] font-black px-4 py-2 rounded-full border transition-all ${isDarkMode ? 'bg-white/5 border-white/5 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-600'}`}>
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> {nearbyUsers.filter(u => u.id !== sessionId).length} Online Syncs
             </span>

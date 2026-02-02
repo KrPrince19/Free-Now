@@ -24,7 +24,7 @@ export default function ProfilePage() {
   const router = useRouter();
 
   // --- 2. GLOBAL STATUS CONTEXT ---
-  const { isFree, statusText, setStatusText, toggleStatus } = useStatus();
+  const { isFree, statusText, setStatusText, toggleStatus, usage } = useStatus();
 
   // --- 3. LOCAL STATE ---
   const [stats, setStats] = useState({ totalRequests: 0, matchesMade: 0 });
@@ -111,6 +111,10 @@ export default function ProfilePage() {
 
       socket.on('request-expired', () => setIncomingRequest(null));
       socket.on('request-ignored', (data) => showToast(data.message, "info"));
+      // 💰 MONETIZATION: Notify user if registration or interaction attempts hit the daily ceiling
+      socket.on('request-failed', (data) => showToast(data.message, data.limitReached ? "error" : "error"));
+      // 🛡️ SECURITY & LIMITS: Catch global broadcast for reached tier limits
+      socket.on('limit-reached', (data) => showToast(data.message, "error"));
       socket.on('request-rejected', (data) => showToast(data.message, "error"));
       socket.on('chat-started', (data) => {
         setShowConnectionAnimation(true);
@@ -132,6 +136,8 @@ export default function ProfilePage() {
         socket.off('receive-chat-request');
         socket.off('request-expired');
         socket.off('request-ignored');
+        socket.off('request-failed');
+        socket.off('limit-reached');
         socket.off('request-rejected');
         socket.off('chat-started');
         socket.off('chat-init-receiver');
@@ -334,6 +340,22 @@ export default function ProfilePage() {
               <div>
                 <h2 className={`text-xl font-bold flex items-center gap-2 tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Vibe Presence <Sparkles size={18} className="text-indigo-400" /></h2>
                 <p className={`text-sm mt-1 ${isDarkMode ? 'text-white/30' : 'text-slate-400 italic'}`}>{isFree ? "Broadcasting to the network" : "Your profile is currently hidden"}</p>
+                {/* 🛡️ USAGE LIMITS: Display remaining daily allowance or Premium status */}
+                {usage.isPremium ? (
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 w-fit mt-2">
+                    <div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Unlimited Vibe (Premium)</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-0.5 mt-2">
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-indigo-400/60' : 'text-indigo-600/60'}`}>
+                      Vibe Pings Left: {Math.max(0, 5 - (usage.requestsToday || 0))}
+                    </p>
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-rose-400/60' : 'text-rose-600/60'}`}>
+                      Visibility Toggles Left: {Math.max(0, 3 - (usage.goFreeToday || 0))}
+                    </p>
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => toggleStatus(!isFree, statusText)}

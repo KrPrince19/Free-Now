@@ -21,14 +21,51 @@ export const StatusProvider = ({ children }) => {
     return "";
   });
 
+  const [usage, setUsage] = useState({ requestsToday: 0, goFreeToday: 0, isPremium: false });
+
   // Re-sync with server on mount/auth load
   useEffect(() => {
-    if (isLoaded && sessionId && isFree) {
-      socket.emit("go-free", {
-        id: sessionId,
-        name: user?.username || user?.firstName || "Guest",
-        status: statusText
-      });
+    if (isLoaded && sessionId) {
+      if (isFree) {
+        socket.emit("go-free", {
+          id: sessionId,
+          name: user?.username || user?.firstName || "Guest",
+          status: statusText
+        });
+      }
+
+      // 💰 MONETIZATION: Listen for real-time usage updates from the server
+      const handleUsageUpdate = (data) => {
+        console.log("📊 [FRONTEND] Received usage update:", data);
+        setUsage(data);
+      };
+
+      // Explicitly ask for latest stats on mount
+      socket.emit("usage-refresh", sessionId);
+
+      // 💎 PREMIUM SYNC: Listen for admin-triggered premium status changes
+      const handlePremiumToggle = (data) => {
+        if (data.email === user?.primaryEmailAddress?.emailAddress) {
+          setUsage(prev => ({ ...prev, isPremium: data.isPremium }));
+        }
+      };
+
+      // ♻️ USAGE SYNC: Listen for admin-triggered usage resets
+      const handleUsageReset = (data) => {
+        if (data.email === user?.primaryEmailAddress?.emailAddress) {
+          setUsage(prev => ({ ...prev, requestsToday: 0, goFreeToday: 0 }));
+        }
+      };
+
+      socket.on("usage-update", handleUsageUpdate);
+      socket.on("admin-premium-toggle", handlePremiumToggle);
+      socket.on("admin-usage-reset", handleUsageReset);
+
+      return () => {
+        socket.off("usage-update", handleUsageUpdate);
+        socket.off("admin-premium-toggle", handlePremiumToggle);
+        socket.off("admin-usage-reset", handleUsageReset);
+      };
     }
   }, [isLoaded, sessionId, isFree, user]);
 
@@ -63,7 +100,7 @@ export const StatusProvider = ({ children }) => {
   };
 
   return (
-    <StatusContext.Provider value={{ isFree, statusText, setStatusText: handleSetStatusText, toggleStatus }}>
+    <StatusContext.Provider value={{ isFree, statusText, usage, setStatusText: handleSetStatusText, toggleStatus }}>
       {children}
     </StatusContext.Provider>
   );

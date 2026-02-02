@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation';
 const Navbar = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // 🧭 ROUTE TRACKING: Get current URL path to dynamically highlight active navigation links
   const pathname = usePathname();
 
   return (
@@ -39,7 +40,7 @@ const Navbar = () => {
 
           {/* Desktop Nav - Hidden on Mobile */}
           <div className="hidden sm:flex items-center gap-2">
-            {/* Home Button */}
+            {/* Home Button - Highlighted only when on the root '/' route */}
             <Link href="/">
               <button className={`flex items-center justify-center w-10 h-10 rounded-2xl transition-all ${pathname === '/'
                 ? (isDarkMode ? 'bg-indigo-600/20 text-indigo-400' : 'bg-indigo-50 text-indigo-600')
@@ -49,7 +50,7 @@ const Navbar = () => {
               </button>
             </Link>
 
-            {/* Sync Button */}
+            {/* Sync Button - High-visibility CTA, highlighted when on '/dashboard' */}
             <Link href="/dashboard">
               <button className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all font-bold text-sm ${pathname === '/dashboard'
                 ? (isDarkMode ? 'bg-indigo-600/20 text-indigo-400' : 'bg-indigo-50 text-indigo-600')
@@ -60,7 +61,7 @@ const Navbar = () => {
               </button>
             </Link>
 
-            {/* User Profile */}
+            {/* User Profile - Rounded avatar button, highlighted when on '/profile' */}
             <Link href="/profile">
               <button className={`w-11 h-11 border rounded-full flex items-center justify-center transition-all group ml-1 ${pathname === '/profile'
                 ? (isDarkMode ? 'border-indigo-500/50 bg-indigo-500/10' : 'border-indigo-200 bg-indigo-50')

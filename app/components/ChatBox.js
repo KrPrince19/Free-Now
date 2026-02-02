@@ -164,10 +164,15 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
       }
     });
     socket.on('vibe-game-state', (state) => {
-      setGameState(state);
+      setGameState(prev => {
+        // Only reset local selection if it's a brand new round
+        if (!prev || prev.round !== state.round) {
+          setMySelection(null);
+          setPartnerSelected(false);
+        }
+        return state;
+      });
       setLastRoundResult(null);
-      setMySelection(null);
-      setPartnerSelected(false);
     });
     socket.on('vibe-partner-selected', ({ sessionId: pSessionId }) => {
       if (pSessionId !== sessionId) setPartnerSelected(true);
@@ -484,6 +489,7 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
                       )}
                     </div>
                   )}
+                  {/* 🛡️ MESSAGE BUBBLE: Styled as glassmorphic bubble; reactions (hearts) on double-click were removed to prevent UI clutter */}
                   <div id={`msg-bubble-${msg.clientId || msg.id}`} className={`px-7 py-5 rounded-[2.8rem] text-[16px] font-semibold tracking-tight leading-relaxed shadow-xl border relative ${isMe ? msg.deleted || msg.expired ? 'bg-slate-100 text-slate-400 border-slate-200 italic' : 'bg-slate-900 text-white border-transparent rounded-tr-none shadow-slate-900/10' : msg.deleted || msg.expired ? 'bg-slate-50 text-slate-400 border-slate-100 italic' : 'bg-white text-slate-800 border-indigo-50 rounded-tl-none shadow-indigo-500/5'}`}>
                     {isImage ? (msg.expired || isExpired ? <div className="flex items-center gap-2 py-2"><Clock size={16} /> Snapshot Expired</div> : <button onClick={() => startImageTimer(msg.clientId || msg.id)} className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all ${isMe ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-600'}`}>{viewingImageId === (msg.clientId || msg.id) ? <Activity size={18} className="animate-pulse" /> : <Eye size={18} />}{viewingImageId === (msg.clientId || msg.id) ? "Viewing Now..." : "View Snapshot"}</button>) : msg.text}
                   </div>
@@ -518,7 +524,9 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
       <AnimatePresence>
         {isGameOpen && gameState && (
           <motion.div initial={{ opacity: 0, y: 100 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 100 }} className="absolute inset-0 z-50 bg-white/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8">
+            {/* 🎮 ARCADE FEEDBACK: Display "VIBE SYNCED!" when both players pick matched emojis */}
             <AnimatePresence>{showMatchAnimation && <motion.div initial={{ scale: 0 }} animate={{ scale: 1.5 }} exit={{ scale: 0 }} className="absolute z-[60] flex flex-col items-center"><div className="text-9xl">💖</div><h2 className="text-4xl font-black text-indigo-600 mt-8 uppercase tracking-tighter">Vibe Synced!</h2></motion.div>}</AnimatePresence>
+            {/* 💔 MISMATCH FEEDBACK: Display clear signal when vibes don't match, encouraging another try */}
             <AnimatePresence>{showMissAnimation && <motion.div initial={{ scale: 0 }} animate={{ scale: 1.5 }} exit={{ scale: 0 }} className="absolute z-[60] flex flex-col items-center"><div className="text-9xl">💔</div><h2 className="text-4xl font-black text-rose-500 mt-8 uppercase tracking-tighter">Vibe Mismatch</h2><p className="text-slate-400 font-bold text-sm mt-2 uppercase tracking-widest">Keep trying, you'll find the rhythm!</p></motion.div>}</AnimatePresence>
             <div className="text-center mb-12 relative z-10">
               <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-2 block">Round {gameState.round}</span>
@@ -529,12 +537,22 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
               </div>
             </div>
             {lastRoundResult ? (
-              <div className="flex gap-16"><div className="flex flex-col items-center gap-2"><span className="text-[10px] font-black uppercase tracking-widest text-slate-400">You</span><div className="text-7xl">{lastRoundResult.selections[sessionId]}</div></div><div className="flex flex-col items-center gap-2"><span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{partnerDetails.name}</span><div className="text-7xl">{Object.values(lastRoundResult.selections).find((_, idx) => Object.keys(lastRoundResult.selections)[idx] !== sessionId) || "?"}</div></div></div>
-            ) : (
+              <div className="flex gap-16"><div className="flex flex-col items-center gap-2"><span className="text-[10px] font-black uppercase tracking-widest text-slate-400">You</span><div className="text-7xl">{lastRoundResult.selections[sessionId] || "❓"}</div></div><div className="flex flex-col items-center gap-2"><span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{partnerDetails.name}</span><div className="text-7xl">{Object.entries(lastRoundResult.selections).find(([sid]) => sid !== sessionId)?.[1] || "❓"}</div></div></div>
+            ) : gameState.turnId === sessionId ? (
               <div className="grid grid-cols-4 md:grid-cols-7 gap-4">
                 {CURATED_EMOJIS.map((emoji, idx) => (
                   <motion.button key={idx} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => selectVibeEmoji(emoji)} disabled={mySelection !== null} className={`text-4xl w-16 h-16 flex items-center justify-center rounded-3xl border-2 transition-all ${mySelection === emoji ? 'bg-indigo-600 border-indigo-600 shadow-xl' : 'bg-white border-slate-100 hover:border-indigo-400'}`}>{emoji}</motion.button>
                 ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-6 py-10 animate-pulse">
+                <div className="w-20 h-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center">
+                  <User className="text-indigo-400 w-10 h-10" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-slate-800">Waiting for {partnerDetails.name}...</h3>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mt-2">Vibe Sync in Progress</p>
+                </div>
               </div>
             )}
             <button onClick={toggleVibeGame} className="mt-16 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-rose-500 transition-colors">Return to Chat</button>
@@ -546,7 +564,7 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
         {viewingImageId !== null && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-slate-950/95 backdrop-blur-2xl flex flex-col items-center justify-center p-4 md:p-8">
             <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-50"><div className="flex flex-col"><span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Snapshot Viewing</span><span className="text-white font-bold text-sm">Self-destructing in {imageTimers[viewingImageId]}s</span></div><button onClick={() => setViewingImageId(null)} className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full transition-all"><X size={24} /></button></div>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative max-w-5xl w-full flex items-center justify-center">{(() => { const msg = messages.find((m, idx) => (m.id || idx) === viewingImageId); return msg ? <img src={msg.text} className="max-h-[80vh] max-w-full rounded-2xl md:rounded-[2.5rem] shadow-2xl border border-white/10" /> : null; })()}</motion.div>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative max-w-5xl w-full flex items-center justify-center">{(() => { const msg = messages.find((m) => (m.clientId || m.id) === viewingImageId); return msg ? <img src={msg.text} className="max-h-[80vh] max-w-full rounded-2xl md:rounded-[2.5rem] shadow-2xl border border-white/10" /> : null; })()}</motion.div>
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xs px-6"><div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><motion.div animate={{ width: `${((imageTimers[viewingImageId] || 10) / 10) * 100}%` }} className="h-full bg-indigo-500" /></div></div>
           </motion.div>
         )}

@@ -65,7 +65,10 @@ This file provides a structured overview of what has been implemented in the Fre
 **How it is implemented**: The drawing canvas was upgraded with `touchstart`, `touchmove`, and `touchend` event listeners. This allows mobile users to draw as naturally as desktop users, with all strokes being synchronized in real-time via the socket relay.
 
 ### Implementing Terms & Privacy Governance
-**How it is implemented**: We consolidated all rules and privacy policies into a single, premium `/terms` page. This ensures transparency regarding our 5-second grace period and zero-logging commitment, all accessible via a unified footer link.
+**How it is implemented**: We consolidated all rules and privacy policies into a single, premium `/terms` page. Recently updated with a dedicated **Monetization Q&A** section that clearly explains the 5-request and 3-status-toggle daily limits, managing user expectations and providing a clear path to premium upgrades.
+
+### Implementing Category-Based Code Documentation
+**How it is implemented**: Conducted a specialized documentation sprint. Added standardized, descriptive comments (e.g., `💰 MONETIZATION`, `🧭 ROUTE TRACKING`, `🎮 ARCADE FEEDBACK`) above all business-critical logic in both frontend and backend. This improves developer maintainability and ensures that the purpose of specialized monetization and feedback features is immediately clear to anyone reviewing the repository.
 
 ### Implementing Client-Side Image Compression
 **How it is implemented**: Developed an on-the-fly compression engine using the Canvas API. When a user selects an image, it is automatically resized (max 1200px) and resampled at 0.6 quality before being staged. This reduces payload sizes by up to 95%, making image sending significantly faster.
@@ -78,6 +81,24 @@ This file provides a structured overview of what has been implemented in the Fre
 1. **Frontend Locking**: Added an `isSending` lock that throttles combined text/image submits to prevent rapid double-clicks.
 2. **Backend Takeover**: The server now automatically disconnects older socket connections when a new session is established for the same ID, ensuring exactly one active listener per user.
 3. **Smart Deduplication**: Improved the `new-message` listener with a `ref` Set (`processedClientIds`) to guarantee each transmission is only rendered once.
+
+### Implementing Route-Aware Navigation Highlighting
+**How it is implemented**: Re-engineered the `Navbar.jsx` to use Next.js `usePathname`. This ensures that only the navigation link corresponding to the current URL receives the "Active" indigo highlight. This logic works across both desktop buttons and the mobile hamburger menu, providing clear spatial awareness for the user.
+
+### Implementing Arcade-Style Game Feedback
+**How it is implemented**: Enhanced the "Vibe Match" game with premium arcade-style overlays. We added a dedicated `AnimatePresence` for a **💔 VIBE MISMATCH** message and updated the **VIBE SYNCED!** animation. These global overlays use high-z-index Framer Motion elements to provide instant, punchy feedback on game outcomes.
+
+### Implementing Daily Usage Limits (Monetization 1.0)
+**How it is implemented**: To support the new monetization strategy, we added a persistent limitation engine. 
+1. **Chat Request Cap**: Free users are limited to 5 outgoing requests per day.
+2. **Availability Cap**: "Go Free" status toggles are limited to 3 per day.
+3. **Paywall UI**: When a limit is hit, the frontend listens for `limit-reached` or `request-failed` (with `limitReached: true`) events and triggers a persistent "Upgrade to Premium" toast notice, blocking further action until the next day or a tier upgrade.
+
+### Implementing Real-Time Usage Counters
+**How it is implemented**: Created a live counting engine that synchronizes local UI with backend database state.
+1. **Backend Relay**: The server emits a `usage-update` event upon registration and after every metered action (Ping or Toggle).
+2. **Global Tracking**: The `StatusContext` maintains a reactive `usage` object that hydrates automatically on mount.
+3. **Dynamic UI**: Added "Vibe Pings Left" and "Visibility Toggles Left" indicators to BOTH the Dashboard and Profile pages. This ensures users have full visibility of their remaining daily allowance (5 pings, 3 toggles) across the entire application, making the tier-based limitations transparent and predictable.
 
 ---
 

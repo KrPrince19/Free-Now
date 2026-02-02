@@ -56,6 +56,14 @@ export default function TermsPage() {
             a: "If you feel your activity metrics don't reflect your current vibe, the administration can reset your total requests and matches to zero. This gives you a fresh start within the community while keeping your registered identity intact."
         },
         {
+            q: "Are there any usage limits on the platform?",
+            a: "To ensure a high-quality experience for everyone and prevent system spam, we apply daily limits to free accounts: 5 Chat Requests and 3 'Go Free' status updates per day. These limits reset automatically at midnight local time."
+        },
+        {
+            q: "How can I get extra limits or unlimited access?",
+            a: "You can upgrade to a 'Premium Vibe' account to unlock unlimited requests, priority matching, and exclusive profile badges. Check your Profile page for upgrade options and premium features."
+        },
+        {
             q: "Is my private data secure?",
             a: "Absolutely. We pride ourselves on 'Read-Only' default access. Administrators cannot view private messages (as they are never logged) or ephemeral snapshots. Governance actions only affect account status and metadata."
         }
