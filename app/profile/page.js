@@ -55,6 +55,7 @@ export default function ProfilePage() {
   const [timeLeft, setTimeLeft] = useState(15);
   const [statusToast, setStatusToast] = useState(null);
   const [showConnectionAnimation, setShowConnectionAnimation] = useState(false);
+  const [gender, setGender] = useState("none"); // 🚻 GENDER STATE
 
   const showToast = (msg, type = "info") => {
     setStatusToast({ msg, type });
@@ -73,14 +74,15 @@ export default function ProfilePage() {
             body: JSON.stringify({
               sessionId,
               email: user.primaryEmailAddress?.emailAddress,
-              name: user.username || user.firstName
+              name: user.username || user.firstName,
+              gender: gender // 🚻 Include gender in sync
             })
           });
         } catch (err) { console.error("Sync Error:", err); }
       }
     };
     syncUser();
-  }, [isLoaded, user, sessionId]);
+  }, [isLoaded, user, sessionId, gender]); // 🚻 Re-sync when gender changes
 
   // --- 5. SOCKET LISTENERS & DATA FETCHING ---
   useEffect(() => {
@@ -106,7 +108,9 @@ export default function ProfilePage() {
             fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user-stats/${userEmail}`),
             fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/history/${userEmail}`)
           ]);
-          setStats(await statsRes.json());
+          const statsData = await statsRes.json();
+          setStats(statsData);
+          if (statsData.gender) setGender(statsData.gender); // 🚻 Set initial gender
           setHistory(await historyRes.json());
           setInitialDataLoaded(true);
         } catch (err) { console.error("Fetch Error:", err); } finally { setIsRefreshing(false); }
@@ -358,13 +362,13 @@ export default function ProfilePage() {
           </div>
           <h1 className={`text-4xl font-black tracking-tight mb-2 relative z-10 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
             {user?.username || user?.firstName}
-            {usage.isPremium && <Crown className="inline-block ml-3 text-amber-400 fill-amber-400" size={24} />}
+            {(usage.isPremium && usage.globalConfig?.eliteEnabled) && <Crown className="inline-block ml-3 text-amber-400 fill-amber-400" size={24} />}
           </h1>
           <p className={`font-medium text-sm tracking-wide mb-6 relative z-10 ${isDarkMode ? 'text-white/40' : 'text-slate-400'}`}>
-            {usage.isPremium ? '👑 Premium Member' : `@${user?.username || user?.firstName}`}
+            {(usage.isPremium && usage.globalConfig?.eliteEnabled) ? '👑 Premium Member' : `@${user?.username || user?.firstName}`}
           </p>
 
-          {usage.isPremium && usage.premiumUntil && (
+          {(usage.isPremium && usage.globalConfig?.eliteEnabled) && usage.premiumUntil && (
             <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className={`mb-6 p-3 rounded-2xl border flex items-center justify-center gap-2 mx-auto w-fit ${isDarkMode ? 'bg-amber-500/5 border-amber-500/20 text-amber-500/80' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
               <Clock size={14} />
               <p className="text-[10px] font-black uppercase tracking-widest">
@@ -372,6 +376,36 @@ export default function ProfilePage() {
               </p>
             </motion.div>
           )}
+
+          {/* 🚻 GENDER SELECTION UI (Elite Only Identity) */}
+          <div className="flex justify-center items-center gap-2 mb-8">
+            <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>Identity:</span>
+            <div className={`p-1 rounded-2xl flex gap-1 ${isDarkMode ? 'bg-white/5' : 'bg-rose-50'}`}>
+              {['male', 'female', 'none'].map((g) => {
+                const isPremiumOption = g !== 'none';
+                const isLocked = isPremiumOption && (!usage.isPremium || !usage.globalConfig?.eliteEnabled);
+                const isSelected = gender === g;
+
+                return (
+                  <button
+                    key={g}
+                    onClick={() => {
+                      if (isLocked) return showToast("Identity disclosure is an Elite 💎 perk!", "error");
+                      setGender(g);
+                    }}
+                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${isSelected
+                      ? 'bg-indigo-500 text-white shadow-lg'
+                      : isDarkMode ? 'text-white/30 hover:text-white/60' : 'text-slate-400 hover:text-slate-600'
+                      } ${isLocked ? 'opacity-60' : ''}`}
+                  >
+                    {g === 'none' ? 'Hidden' : g}
+                    {isLocked && <Lock size={10} />}
+                    {isSelected && !isLocked && g !== 'none' && <Sparkles size={10} className="text-indigo-200" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="flex justify-center gap-3">
             <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-white/5 border-white/10 text-indigo-400' : 'bg-indigo-50 border-indigo-100 text-indigo-600'}`}>
@@ -383,7 +417,7 @@ export default function ProfilePage() {
           </div>
 
           {/* 💎 ELITE UPGRADE: Re-positioned for better visibility & responsiveness */}
-          {!usage.isPremium && (
+          {(!usage.isPremium && usage.globalConfig?.eliteEnabled) && (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -412,7 +446,7 @@ export default function ProfilePage() {
                 <h2 className={`text-xl font-bold flex items-center gap-2 tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Vibe Presence <Sparkles size={18} className="text-indigo-400" /></h2>
                 <p className={`text-sm mt-1 ${isDarkMode ? 'text-white/30' : 'text-slate-400 italic'}`}>{isFree ? "Broadcasting to the network" : "Your profile is currently hidden"}</p>
                 {/* 🛡️ USAGE LIMITS: Display remaining daily allowance or Premium status */}
-                {usage.isPremium ? (
+                {(usage.isPremium && usage.globalConfig?.eliteEnabled) ? (
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 w-fit mt-2">
                     <div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
                     <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Unlimited Vibe (Premium)</p>
@@ -420,10 +454,10 @@ export default function ProfilePage() {
                 ) : (
                   <div className="flex flex-col gap-0.5 mt-2">
                     <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-indigo-400/60' : 'text-indigo-600/60'}`}>
-                      Vibe Pings Left: {Math.max(0, 5 - (usage.requestsToday || 0))}
+                      Vibe Pings Left: {Math.max(0, (usage.globalConfig?.pingLimit || 5) - (usage.requestsToday || 0))}
                     </p>
                     <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-rose-400/60' : 'text-rose-600/60'}`}>
-                      Visibility Toggles Left: {Math.max(0, 3 - (usage.goFreeToday || 0))}
+                      Visibility Toggles Left: {Math.max(0, (usage.globalConfig?.toggleLimit || 3) - (usage.goFreeToday || 0))}
                     </p>
                   </div>
                 )}
@@ -464,11 +498,11 @@ export default function ProfilePage() {
                     : isDarkMode
                       ? 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'
                       : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'
-                    } ${vibe.premium && !usage.isPremium ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    } ${(vibe.premium && usage.globalConfig?.eliteEnabled) && !usage.isPremium ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
                   {vibe.text}
-                  {vibe.premium && !usage.isPremium && <Lock size={10} />}
-                  {vibe.premium && usage.isPremium && <Crown size={10} className="text-amber-400 fill-amber-400" />}
+                  {(vibe.premium && usage.globalConfig?.eliteEnabled) && !usage.isPremium && <Lock size={10} />}
+                  {(vibe.premium && usage.globalConfig?.eliteEnabled) && usage.isPremium && <Crown size={10} className="text-amber-400 fill-amber-400" />}
                 </button>
               ))}
             </div>

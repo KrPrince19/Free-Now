@@ -4,10 +4,11 @@ import { socket } from '../lib/socket';
 import Navbar from '../components/Navbar';
 import ChatBox from '../components/ChatBox';
 import { useUser, useAuth } from "@clerk/nextjs";
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
 import {
   Sparkles, MessageCircle, Coffee, Zap, BellRing,
-  Trophy, Clock, Heart, Globe, Crown
+  Trophy, Clock, Heart, Globe, Crown, Lock
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useStatus } from '../context/StatusContext';
@@ -28,9 +29,11 @@ function Counter({ value }) {
 export default function Dashboard() {
   const { user } = useUser();
   const { sessionId } = useAuth();
+  const router = useRouter();
   const { statusText, toggleStatus, usage } = useStatus();
   const [nearbyUsers, setNearbyUsers] = useState([]);
   const [filterTag, setFilterTag] = useState("All");
+  const [genderFilter, setGenderFilter] = useState("All"); // 🚻 GENDER FILTER STATE
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -196,8 +199,15 @@ export default function Dashboard() {
 
   const filteredUsers = nearbyUsers.filter((u) => {
     if (u.id === sessionId) return false;
-    if (filterTag === "All") return true;
-    return u.status?.toLowerCase().includes(filterTag.toLowerCase());
+
+    // 1. Tag Filtering
+    const matchesTag = filterTag === "All" || u.status?.toLowerCase().includes(filterTag.toLowerCase());
+
+    // 2. Gender Filtering (Elite Only)
+    const isElite = usage.isPremium && usage.globalConfig?.eliteEnabled;
+    const matchesGender = !isElite || genderFilter === "All" || u.gender === genderFilter.toLowerCase();
+
+    return matchesTag && matchesGender;
   });
 
   if (loading) return <LoadingScreen message="Establishing Vibe Session..." />;
@@ -258,12 +268,12 @@ export default function Dashboard() {
             )}
             <div className="flex items-center justify-between relative z-10">
               <div className="flex items-center gap-4">
-                <div className={`${incomingRequest.isPriority ? 'bg-indigo-500' : 'bg-rose-500'} p-3 rounded-2xl animate-pulse`}>
-                  {incomingRequest.isPriority ? <Crown size={20} className="text-white" /> : <BellRing size={20} className="text-white" />}
+                <div className={`${(incomingRequest.isPriority && usage.globalConfig?.eliteEnabled) ? 'bg-indigo-500' : 'bg-rose-500'} p-3 rounded-2xl animate-pulse`}>
+                  {(incomingRequest.isPriority && usage.globalConfig?.eliteEnabled) ? <Crown size={20} className="text-white" /> : <BellRing size={20} className="text-white" />}
                 </div>
                 <div>
-                  <p className={`text-xs font-black uppercase tracking-widest ${incomingRequest.isPriority ? 'text-amber-400' : 'text-rose-400'}`}>
-                    {incomingRequest.isPriority ? '👑 Priority Vibe' : 'Incoming Vibe'}
+                  <p className={`text-xs font-black uppercase tracking-widest ${(incomingRequest.isPriority && usage.globalConfig?.eliteEnabled) ? 'text-amber-400' : 'text-rose-400'}`}>
+                    {(incomingRequest.isPriority && usage.globalConfig?.eliteEnabled) ? '👑 Priority Vibe' : 'Incoming Vibe'}
                   </p>
                   <p className="font-bold text-lg text-white">{incomingRequest.senderName} wants to chat!</p>
                 </div>
@@ -274,7 +284,7 @@ export default function Dashboard() {
             </div>
             <div className="flex gap-2 relative z-10">
               <button onClick={handleIgnoreRequest} className={`flex-1 px-4 py-3 rounded-2xl text-sm font-bold ${isDarkMode ? 'bg-white/5 text-white/40' : 'bg-white/5 text-slate-400'}`}>Pass</button>
-              <button onClick={handleAcceptRequest} className={`${incomingRequest.isPriority ? 'bg-indigo-600' : 'bg-rose-500'} text-white px-6 py-3 rounded-2xl text-sm font-black shadow-lg`}>Accept vibe</button>
+              <button onClick={handleAcceptRequest} className={`${(incomingRequest.isPriority && usage.globalConfig?.eliteEnabled) ? 'bg-indigo-600' : 'bg-rose-500'} text-white px-6 py-3 rounded-2xl text-sm font-black shadow-lg`}>Accept vibe</button>
             </div>
           </motion.div>
         )}
@@ -308,7 +318,7 @@ export default function Dashboard() {
             <div className="flex flex-col gap-1">
               <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>People Active Now</h3>
               {/* 💰 USAGE COUNTERS: Display remaining daily limits or Premium status */}
-              {usage.isPremium ? (
+              {(usage.isPremium && usage.globalConfig?.eliteEnabled) ? (
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 w-fit">
                   <div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
                   <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Unlimited Vibe (Premium)</p>
@@ -316,10 +326,10 @@ export default function Dashboard() {
               ) : (
                 <div className="flex flex-col gap-0.5">
                   <p className={`text-[9px] font-black uppercase tracking-widest ${isDarkMode ? 'text-indigo-400/60' : 'text-indigo-600/60'}`}>
-                    Vibe Pings Left: {Math.max(0, 5 - (usage.requestsToday || 0))}
+                    Vibe Pings Left: {Math.max(0, (usage.globalConfig?.pingLimit || 5) - (usage.requestsToday || 0))}
                   </p>
                   <p className={`text-[9px] font-black uppercase tracking-widest ${isDarkMode ? 'text-rose-400/60' : 'text-rose-600/60'}`}>
-                    Visibility Toggles Left: {Math.max(0, 3 - (usage.goFreeToday || 0))}
+                    Visibility Toggles Left: {Math.max(0, (usage.globalConfig?.toggleLimit || 3) - (usage.goFreeToday || 0))}
                   </p>
                 </div>
               )}
@@ -328,6 +338,45 @@ export default function Dashboard() {
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> {nearbyUsers.filter(u => u.id !== sessionId).length} Online Syncs
             </span>
           </div>
+
+          {/* 🚻 GENDER FILTER UI (Premium Vibes Style) */}
+          {usage.globalConfig?.eliteEnabled && (
+            <div className="mb-6 space-y-4">
+              <div className="flex items-center justify-between px-2">
+                <div className="flex items-center gap-2">
+                  <Crown size={14} className={usage.isPremium ? "text-amber-400" : "text-white/20"} />
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-white/30' : 'text-slate-400'}`}>
+                    {usage.isPremium ? 'Elite Vibe Filters' : 'Gender Filter (Elite Only)'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {["All", "Male", "Female", "None"].map(g => {
+                  const isSelected = genderFilter === g;
+                  const isLocked = !usage.isPremium;
+
+                  return (
+                    <button
+                      key={g}
+                      onClick={() => {
+                        if (isLocked) return showToast("Gender filtering is an Elite 💎 perk!", "reject", true);
+                        setGenderFilter(g);
+                      }}
+                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border flex items-center gap-2 ${isSelected
+                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg'
+                        : isDarkMode ? 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10' : 'bg-white border-slate-100 text-slate-400'
+                        } ${isLocked ? 'opacity-70' : ''}`}
+                    >
+                      {g === "None" ? "Hidden" : g}
+                      {isLocked && <Lock size={10} className="text-white/20" />}
+                      {usage.isPremium && isSelected && <Sparkles size={10} className="text-indigo-200" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
             {VIBE_TAGS.map(tag => (
@@ -339,12 +388,12 @@ export default function Dashboard() {
             <AnimatePresence mode="popLayout">
               {filteredUsers.length > 0 ? (
                 filteredUsers.map((u) => (
-                  <motion.div key={u.id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl transition-all border group hover:scale-[1.02] ${isDarkMode ? 'bg-[#111116] border-white/5 shadow-black/20' : 'bg-white border-slate-50'} ${u.isPremium ? 'border-indigo-500/30 ring-1 ring-indigo-500/10' : ''}`}>
+                  <motion.div key={u.id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={`p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl transition-all border group hover:scale-[1.02] ${isDarkMode ? 'bg-[#111116] border-white/5 shadow-black/20' : 'bg-white border-slate-50'} ${(u.isPremium && usage.globalConfig?.eliteEnabled) ? 'border-indigo-500/30 ring-1 ring-indigo-500/10' : ''}`}>
                     <div className="flex items-center gap-4">
                       {/* 💎 PREMIUM: Golden/Indigo Glowing Ring for Premium Avatars */}
-                      <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center text-white text-lg font-black shadow-lg ${u.isPremium ? 'bg-gradient-to-tr from-indigo-600 to-purple-600 ring-4 ring-indigo-500/20 shadow-indigo-500/40' : 'bg-gradient-to-tr from-indigo-500 to-rose-500 shadow-indigo-500/20'}`}>
+                      <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center text-white text-lg font-black shadow-lg ${(u.isPremium && usage.globalConfig?.eliteEnabled) ? 'bg-gradient-to-tr from-indigo-600 to-purple-600 ring-4 ring-indigo-500/20 shadow-indigo-500/40' : 'bg-gradient-to-tr from-indigo-500 to-rose-500 shadow-indigo-500/20'}`}>
                         {u.name ? u.name[0] : "?"}
-                        {u.isPremium && (
+                        {(u.isPremium && usage.globalConfig?.eliteEnabled) && (
                           <motion.div
                             animate={{ opacity: [0.5, 1, 0.5] }}
                             transition={{ duration: 2, repeat: Infinity }}
@@ -356,7 +405,7 @@ export default function Dashboard() {
                         <div className="flex items-center gap-2">
                           <h4 className={`font-black text-base ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{u.name}</h4>
                           {/* 💎 PREMIUM: Crown Badge for Premium Accounts */}
-                          {u.isPremium && <Crown size={14} className="text-amber-400 fill-amber-400" />}
+                          {(u.isPremium && usage.globalConfig?.eliteEnabled) && <Crown size={14} className="text-amber-400 fill-amber-400" />}
                         </div>
                         <div className="flex items-center gap-1 text-xs font-bold bg-gradient-to-r from-indigo-500 to-rose-500 bg-clip-text text-transparent italic mt-1"><Coffee size={14} className="text-rose-400" /> "{u.status}"</div>
                       </div>

@@ -21,7 +21,16 @@ export const StatusProvider = ({ children }) => {
     return "";
   });
 
-  const [usage, setUsage] = useState({ requestsToday: 0, goFreeToday: 0, isPremium: false });
+  const [usage, setUsage] = useState({
+    requestsToday: 0,
+    goFreeToday: 0,
+    isPremium: false,
+    globalConfig: {
+      eliteEnabled: true,
+      pingLimit: 5,
+      toggleLimit: 3
+    }
+  });
 
   // Re-sync with server on mount/auth load
   useEffect(() => {
@@ -67,15 +76,44 @@ export const StatusProvider = ({ children }) => {
         }
       };
 
+      // 🛡️ CONFIG SYNC: Listen for global app configuration changes
+      const handleConfigUpdate = (data) => {
+        console.log("🛡️ [FRONTEND] Global config update:", data);
+        setUsage(prev => ({
+          ...prev,
+          globalConfig: {
+            eliteEnabled: data.eliteEnabled,
+            pingLimit: data.pingLimit,
+            toggleLimit: data.toggleLimit
+          }
+        }));
+      };
+
       socket.on("usage-update", handleUsageUpdate);
       socket.on("admin-premium-toggle", handlePremiumToggle);
       socket.on("admin-usage-reset", handleUsageReset);
+      socket.on("config-update", handleConfigUpdate);
+
+      // 🌐 GLOBAL PREMIUM TRIGGER: Force a refresh when admin upgrades everyone
+      socket.on("admin-premium-all-trigger", () => {
+        console.log("🌐 [FRONTEND] Global premium trigger received! Refreshing...");
+        socket.emit("usage-refresh", sessionId);
+      });
+
+      // 🕛 MIDNIGHT RESET TRIGGER: Force a refresh when daily limits reset
+      socket.on("midnight-vibe-reset", () => {
+        console.log("🕛 [FRONTEND] Midnight reset received! Refreshing usage...");
+        socket.emit("usage-refresh", sessionId);
+      });
 
       return () => {
         console.log("🧹 [FRONTEND] Cleaning up StatusContext listeners");
         socket.off("usage-update", handleUsageUpdate);
         socket.off("admin-premium-toggle", handlePremiumToggle);
         socket.off("admin-usage-reset", handleUsageReset);
+        socket.off("config-update", handleConfigUpdate);
+        socket.off("admin-premium-all-trigger");
+        socket.off("midnight-vibe-reset");
       };
     }
   }, [isLoaded, sessionId, isFree, user]);
