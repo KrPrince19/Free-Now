@@ -56,6 +56,7 @@ export default function ProfilePage() {
   const [statusToast, setStatusToast] = useState(null);
   const [showConnectionAnimation, setShowConnectionAnimation] = useState(false);
   const [gender, setGender] = useState("none"); // 🚻 GENDER STATE
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
   const showToast = (msg, type = "info") => {
     setStatusToast({ msg, type });
@@ -190,32 +191,79 @@ export default function ProfilePage() {
     setIncomingRequest(null);
   };
 
-  // 💰 MOCK PAYMENT: Simulates a successful checkout for development
-  const handleSimulatePayment = async () => {
+  // 💰 RAZORPAY PAYMENT: Real checkout flow for Elite Status
+  const handleRazorpayPayment = async () => {
     if (!user || !sessionId) return;
 
     try {
-      showToast("Processing simulation...", "info");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mock-payment-success`, {
+      showToast("Initializing secure checkout...", "info");
+
+      // 1. Create order on the backend
+      const orderRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/payment/create-order`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user.primaryEmailAddress?.emailAddress,
-          sessionId: sessionId
-        })
+        headers: { "Content-Type": "application/json" }
       });
 
-      if (res.ok) {
-        showToast("Welcome to Elite Status! 👑", "info");
-        // NOTE: StatusContext handles the real-time UI shift via Socket
-      } else {
-        showToast("Simulation failed. Check backend logs.", "error");
-      }
+      if (!orderRes.ok) throw new Error("Failed to create order");
+      const orderData = await orderRes.json();
+
+      // 2. Configure Razorpay Options
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_your_id",
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "FreeNow Elite",
+        description: "Unlock Premium Features for 30 Days",
+        order_id: orderData.id,
+        handler: async (response) => {
+          // 3. Verify payment on the backend
+          showToast("Verifying payment...", "info");
+          const verifyRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/payment/verify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              email: user.primaryEmailAddress?.emailAddress,
+              sessionId: sessionId
+            })
+          });
+
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            showToast("Welcome to the Elite Club! 👑", "success");
+            // StatusContext handles real-time UI shift
+          } else {
+            showToast("Payment verification failed.", "error");
+          }
+        },
+        prefill: {
+          name: user.username || user.firstName,
+          email: user.primaryEmailAddress?.emailAddress,
+        },
+        theme: { color: "#6366f1" }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err) {
-      console.error("Payment Simulation Error:", err);
-      showToast("Network error during simulation.", "error");
+      console.error("Razorpay Error:", err);
+      showToast("Checkout failed. Try again later.", "error");
     }
   };
+
+  // 💰 LOAD RAZORPAY SDK
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => setRazorpayLoaded(true);
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
 
 
@@ -421,7 +469,7 @@ export default function ProfilePage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleSimulatePayment}
+              onClick={handleRazorpayPayment}
               className={`mt-8 w-full sm:w-auto relative px-8 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all shadow-xl overflow-hidden group/elite ${isDarkMode
                 ? 'bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 text-black'
                 : 'bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 text-white'
