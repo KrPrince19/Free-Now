@@ -268,6 +268,12 @@ export default function SupportPage() {
                 </div>
 
                 <footer className="mt-32 text-center border-t border-white/[0.05] pt-12">
+                    <div className="flex flex-wrap justify-center gap-6 mb-8">
+                        <Link href="/terms" className={`text-[10px] font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>Terms</Link>
+                        <Link href="/privacy-policy" className={`text-[10px] font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>Privacy</Link>
+                        <Link href="/refund-policy" className={`text-[10px] font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>Refunds</Link>
+                        <Link href="/contact" className={`text-[10px] font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>Contact</Link>
+                    </div>
                     <p className={`text-[10px] font-black uppercase tracking-[0.4em] ${isDarkMode ? 'text-white/20' : 'text-slate-300'}`}>
                         &copy; {new Date().getFullYear()} FreeNow Support Hub. Always Listening.
                     </p>

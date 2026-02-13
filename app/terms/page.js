@@ -12,60 +12,60 @@ export default function TermsPage() {
     const sections = [
         {
             icon: <Lock size={24} className="text-indigo-500" />,
-            title: "Ephemeral Privacy",
-            content: "All chat sessions are ephemeral. We do not store your messages once the session is terminated. Your 'vibe' is shared only with people you choose to connect with. No database logging of conversations."
+            title: "Service Overview",
+            content: "FreeNow provides real-time digital networking and content transmission services. Our platform enables users to establish temporary, encrypted communication channels. We operate on a 'Zero-Persistence' model, ensuring that user-generated content is not retained on our servers after session conclusion."
         },
         {
             icon: <EyeOff size={24} className="text-rose-500" />,
-            title: "Zero Tracking Identity",
-            content: "No public profiles, no stalking, no history. We don't use tracking cookies. Your presence is temporary. When you go 'Invisible', you are truly gone from the network."
+            title: "Identity & Anonymity",
+            content: "We prioritize user privacy by minimizing data collection. The platform does not maintain public user directories or historical tracking. User presence is managed through temporary session tokens that expire upon inactivity or manual termination."
         },
         {
             icon: <ShieldCheck size={24} className="text-emerald-500" />,
-            title: "User Conduct",
-            content: "Harassment or abuse of the vibe match system will result in instant session termination. We keep the platform clean and meaningful. Respect the vibe of others."
+            title: "Acceptable Use Policy",
+            content: "Users must adhere to our Community Standards. Any form of harassment, unauthorized data scraping, or abuse of the networking system is strictly prohibited. Violations result in immediate suspension of service access to protect the platform's integrity."
         },
         {
             icon: <Zap size={24} className="text-amber-500" />,
-            title: "Refresh Grace Period",
-            content: "To prevent accidental disconnects, we offer a 5-second grace period. If you refresh within 5 seconds, your session and chat room remain intact. After that, all data is wiped."
+            title: "Technical Continuity",
+            content: "Our infrastructure includes a 5-second session recovery window to mitigate accidental network disconnections. Beyond this window, all session-related metadata is automatically purged from active memory for security compliance."
         },
         {
             icon: <Scale size={24} className="text-purple-500" />,
-            title: "Snapshot Policy",
-            content: "Image snapshots are strictly auto-destructing. Attempting to bypass the 10-second timer violates our commitment to user privacy and is grounds for a permanent session ban."
+            title: "Intellectual Property",
+            content: "Users retain ownership of the content they transmit. However, by using the service, you grant FreeNow a temporary license to relay such content to the intended recipient. All platform logos, software, and designs are the exclusive property of FreeNow."
         },
         {
             icon: <Shield size={24} className="text-blue-500" />,
-            title: "End-to-End Vibe",
-            content: "We use secure WebSocket technology to ensure your interactions are direct and minimized from third-party interception. We prioritize speed and security."
+            title: "Security & Encryption",
+            content: "We utilize industry-standard WebSocket protocols and SSL/TLS encryption for all data in transit. Our architecture is designed to minimize third-party intercepted risks and ensure high-speed, secure data delivery."
         }
     ];
 
     const faqs = [
         {
             q: "What is the ICE Protocol?",
-            a: "The 'Instant Closure Entry' protocol is our safety response system. If an administrator detects a severe violation of community vibe or safety, your account can be instantly suspended. This locks the application with a restricted access overlay, preventing any further interaction."
+            a: "The 'Instant Closure Entry' protocol is our automated safety response system. If our administrative monitors or automated filters detect severe violations of our Service Agreement, the associated account is instantly restricted via a secure overlay to prevent further platform interaction."
         },
         {
-            q: "Can I permanently delete my account?",
-            a: "Yes. Our governance model allows for complete removal. Upon your request or an administrative action, we perform a 'Cascading Delete' which purges your profile, email reference, and every trace of your activity logs from our systems."
+            q: "What is the policy on account termination?",
+            a: "FreeNow supports 'Complete Data Erasure'. Upon user request or administrative termination, we perform a cascading database purge that removes all profile references and system activity logs, ensuring no residual data remains."
         },
         {
-            q: "How does 'Reset Stats' work?",
-            a: "If you feel your activity metrics don't reflect your current vibe, the administration can reset your total requests and matches to zero. This gives you a fresh start within the community while keeping your registered identity intact."
+            q: "How are account statistics managed?",
+            a: "Users may request a reset of their networking metrics (total requests and matches). This action clears historical usage data while maintaining the registered account identity, allowing for a recalibrated user experience."
         },
         {
-            q: "Are there any usage limits on the platform?",
-            a: "To ensure a high-quality experience for everyone and prevent system spam, we apply daily limits to free accounts: 5 Chat Requests and 3 'Go Free' status updates per day. These limits reset automatically at midnight local time."
+            q: "Are there usage quotas on the platform?",
+            a: "To maintain optimal service performance and prevent system overflow, daily usage limits are applied to standard accounts. These quotas (5 chat requests and 3 status updates) are reset daily at 00:00 IST."
         },
         {
-            q: "How can I get extra limits or unlimited access?",
-            a: "You can upgrade to a 'Premium Vibe' account to unlock unlimited requests, priority matching, and exclusive profile badges. Check your Profile page for upgrade options and premium features."
+            q: "How can I access unlimited service features?",
+            a: "Users may upgrade to an 'Elite Status' account via our secure payment gateway. Elite Status removes daily usage quotas, provides priority networking access, and unlocks premium interface enhancements. These are digital' content services delivered instantly upon purchase."
         },
         {
-            q: "Is my private data secure?",
-            a: "Absolutely. We pride ourselves on 'Read-Only' default access. Administrators cannot view private messages (as they are never logged) or ephemeral snapshots. Governance actions only affect account status and metadata."
+            q: "Is my personal data protected?",
+            a: "Yes. We maintain a 'Privacy by Design' architecture. Administrative access is restricted to account metadata and status management only. Private communications and ephemeral media are never logged or accessible by platform staff."
         }
     ];
 
@@ -89,10 +89,10 @@ export default function TermsPage() {
                         <ArrowLeft size={16} /> Exit Terms
                     </Link>
                     <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500 bg-clip-text text-transparent">
-                        Terms & Privacy
+                        Terms of Service
                     </h1>
                     <p className={`text-lg font-medium max-w-2xl mx-auto ${isDarkMode ? 'text-white/40' : 'text-slate-500'}`}>
-                        Our commitment to your anonymity and the simple rules that keep the vibe alive.
+                        Professional standards for the next generation of digital networking.
                     </p>
                 </motion.div>
 
@@ -117,6 +117,12 @@ export default function TermsPage() {
                     ))}
                 </div>
 
+                <div className="mt-12 flex flex-wrap justify-center gap-4">
+                    <Link href="/privacy-policy" className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-slate-200 hover:bg-slate-50'}`}>Privacy Policy</Link>
+                    <Link href="/refund-policy" className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-slate-200 hover:bg-slate-50'}`}>Refund Policy</Link>
+                    <Link href="/contact" className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-slate-200 hover:bg-slate-50'}`}>Contact Us</Link>
+                </div>
+
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -125,7 +131,7 @@ export default function TermsPage() {
                 >
                     <h2 className="text-3xl font-black tracking-tight mb-8 px-4 flex items-center gap-3">
                         <Scale className="text-indigo-500" size={24} />
-                        Governance FAQ
+                        Compliance & FAQ
                     </h2>
                     <div className="space-y-4">
                         {faqs.map((faq, idx) => (
@@ -134,9 +140,9 @@ export default function TermsPage() {
                                 className={`p-8 rounded-3xl border transition-all ${isDarkMode ? 'bg-white/[0.01] border-white/[0.03] hover:border-white/10' : 'bg-slate-50 border-slate-100'
                                     }`}
                             >
-                                <h4 className="text-sm font-black uppercase tracking-widest text-indigo-500 mb-2">Question</h4>
+                                <h4 className="text-sm font-black uppercase tracking-widest text-indigo-500 mb-2">Notice</h4>
                                 <p className="text-lg font-bold mb-4 tracking-tight">{faq.q}</p>
-                                <h4 className={`text-[10px] font-black uppercase tracking-widest mb-2 ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>The Solution</h4>
+                                <h4 className={`text-[10px] font-black uppercase tracking-widest mb-2 ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>Policy Detail</h4>
                                 <p className={`text-sm leading-relaxed font-medium ${isDarkMode ? 'text-white/40' : 'text-slate-500'}`}>
                                     {faq.a}
                                 </p>

@@ -113,8 +113,11 @@ function Footer({ isDark }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          <Link href="/terms" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Terms & Privacy</Link>
+        <div className="flex flex-wrap items-center justify-center md:justify-end gap-x-8 gap-y-4">
+          <Link href="/terms" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Terms</Link>
+          <Link href="/privacy-policy" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Privacy</Link>
+          <Link href="/refund-policy" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Refunds</Link>
+          <Link href="/contact" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Contact</Link>
           <Link href="/support" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Support</Link>
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${isDark ? 'bg-white/5 border-white/5 text-rose-400' : 'bg-rose-50 border-rose-100 text-rose-500'}`}>
             <Heart size={18} fill="currentColor" />
