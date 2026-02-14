@@ -136,11 +136,11 @@ export default function SupportPage() {
                     <Link href="/" className={`inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest mb-8 transition-colors ${isDarkMode ? 'text-white/40 hover:text-white' : 'text-slate-400 hover:text-slate-900'}`}>
                         <ArrowLeft size={16} /> Close Help
                     </Link>
-                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500 bg-clip-text text-transparent">
-                        Support Pulse
+                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-700 bg-clip-text text-transparent">
+                        Support Hub
                     </h1>
                     <p className={`text-xl font-medium max-w-2xl mx-auto ${isDarkMode ? 'text-white/40' : 'text-slate-500'}`}>
-                        Answers for the curious, support for the seekers. How can we help you vibe?
+                        Answers for the curious, support for the seekers. How can we help you sync?
                     </p>
                 </motion.div>
 
@@ -164,10 +164,10 @@ export default function SupportPage() {
                     {/* Feedback Form Section */}
                     <section>
                         <div className="flex items-center gap-4 mb-10">
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDarkMode ? 'bg-rose-500/20 text-rose-400' : 'bg-rose-50 text-rose-600'}`}>
-                                <MessageCircle size={24} />
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDarkMode ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
+                                <MessageSquare size={24} />
                             </div>
-                            <h2 className="text-3xl font-black tracking-tight">Drop a Vibe</h2>
+                            <h2 className="text-3xl font-black tracking-tight">Drop a Message</h2>
                         </div>
 
                         <motion.div
@@ -256,12 +256,12 @@ export default function SupportPage() {
                             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
                         </motion.div>
 
-                        <div className="mt-12 p-8 rounded-[2rem] border bg-gradient-to-tr from-indigo-500/5 to-rose-500/5 border-indigo-500/10 flex items-center gap-6">
+                        <div className="mt-12 p-8 rounded-[2rem] border bg-gradient-to-tr from-indigo-500/5 to-indigo-600/5 border-indigo-500/10 flex items-center gap-6">
                             <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-lg">
-                                <Heart className="text-rose-500 fill-rose-500" size={20} />
+                                <MessageSquare className="text-indigo-500" size={20} />
                             </div>
                             <p className={`text-sm font-bold ${isDarkMode ? 'text-white/50' : 'text-slate-500'}`}>
-                                Your feedback helps us keep the vibe alive. We read every single message.
+                                Your feedback helps us keep the network alive. We read every single message.
                             </p>
                         </div>
                     </section>

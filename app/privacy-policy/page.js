@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Shield, Eye, Lock, Database, ArrowLeft, Heart, Globe, FileText } from 'lucide-react';
+import { Shield, Eye, Lock, Database, ArrowLeft, MessageSquare, Globe, FileText } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
 
@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
             content: "We collect minimal information required to provide our networking services: your email address, name, and temporary session identifiers. We do not collect or store sensitive personal information like biometrics, precise location, or financial data outside of secure payment processing."
         },
         {
-            icon: <Eye size={24} className="text-rose-500" />,
+            icon: <Eye size={24} className="text-indigo-500" />,
             title: "Use of Information",
             content: "Your data is used exclusively for account authentication, delivering our digital services, and platform security. We do not sell, trade, or rent your personal information to third parties for marketing purposes."
         },
@@ -33,12 +33,12 @@ export default function PrivacyPolicyPage() {
     ];
 
     return (
-        <div className={`min-h-screen font-sans transition-colors duration-500 selection:bg-indigo-500/30 ${isDarkMode ? 'bg-[#0a0a0c] text-white' : 'bg-rose-50/30 text-slate-800'}`}>
+        <div className={`min-h-screen font-sans transition-colors duration-500 selection:bg-indigo-500/30 ${isDarkMode ? 'bg-[#0a0a0c] text-white' : 'bg-slate-50/30 text-slate-800'}`}>
             <Navbar />
 
             <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
                 <div className={`absolute top-[-10%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000 ${isDarkMode ? 'bg-indigo-500/10' : 'bg-indigo-500/5'}`} />
-                <div className={`absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000 ${isDarkMode ? 'bg-rose-500/10' : 'bg-rose-500/5'}`} />
+                <div className={`absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000 ${isDarkMode ? 'bg-indigo-500/10' : 'bg-indigo-500/5'}`} />
             </div>
 
             <main className="max-w-4xl mx-auto px-6 py-20 relative z-10">

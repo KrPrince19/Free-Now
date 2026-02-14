@@ -16,7 +16,7 @@ export default function TermsPage() {
             content: "FreeNow provides real-time digital networking and content transmission services. Our platform enables users to establish temporary, encrypted communication channels. We operate on a 'Zero-Persistence' model, ensuring that user-generated content is not retained on our servers after session conclusion."
         },
         {
-            icon: <EyeOff size={24} className="text-rose-500" />,
+            icon: <EyeOff size={24} className="text-indigo-500" />,
             title: "Identity & Anonymity",
             content: "We prioritize user privacy by minimizing data collection. The platform does not maintain public user directories or historical tracking. User presence is managed through temporary session tokens that expire upon inactivity or manual termination."
         },
@@ -76,7 +76,7 @@ export default function TermsPage() {
             {/* Background Accents */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
                 <div className={`absolute top-[-10%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000 ${isDarkMode ? 'bg-indigo-500/10' : 'bg-indigo-500/5'}`} />
-                <div className={`absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000 ${isDarkMode ? 'bg-rose-500/10' : 'bg-rose-500/5'}`} />
+                <div className={`absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000 ${isDarkMode ? 'bg-indigo-500/10' : 'bg-indigo-500/5'}`} />
             </div>
 
             <main className="max-w-4xl mx-auto px-6 py-20 relative z-10">
@@ -88,11 +88,11 @@ export default function TermsPage() {
                     <Link href="/" className={`inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest mb-8 transition-colors ${isDarkMode ? 'text-white/40 hover:text-white' : 'text-slate-400 hover:text-slate-900'}`}>
                         <ArrowLeft size={16} /> Exit Terms
                     </Link>
-                    <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500 bg-clip-text text-transparent">
+                    <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 bg-clip-text text-transparent">
                         Terms of Service
                     </h1>
                     <p className={`text-lg font-medium max-w-2xl mx-auto ${isDarkMode ? 'text-white/40' : 'text-slate-500'}`}>
-                        Professional standards for the next generation of digital networking.
+                        Professional standards for global digital networking.
                     </p>
                 </motion.div>
 
@@ -159,14 +159,14 @@ export default function TermsPage() {
                         }`}
                 >
                     <div className="flex justify-center gap-2 mb-6">
-                        <Heart size={20} className="text-rose-500 fill-rose-500" />
+                        <MessageSquare size={20} className="text-indigo-500" />
                         <Sparkles size={20} className="text-indigo-500" />
                     </div>
                     <h2 className="text-2xl font-black mb-4 tracking-tight">Community Ethos</h2>
                     <p className={`max-w-xl mx-auto text-sm leading-relaxed font-medium mb-8 ${isDarkMode ? 'text-white/40' : 'text-slate-500'}`}>
-                        FreeNow is built on the belief that real connections shouldn't leave a trail.
-                        By using this platform, you agree to treat every interaction with authenticity and respect.
-                        No logs, no traces, just vibes.
+                        FreeNow is built on the belief that real networking doesn't require permanent traces.
+                        By using this platform, you agree to treat every interaction with professional respect and authenticity.
+                        No logs, no traces, just syncs.
                     </p>
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">
                         Version 1.0.0 • Updated Jan 2026

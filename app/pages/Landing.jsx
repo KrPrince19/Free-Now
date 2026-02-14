@@ -11,7 +11,7 @@ import {
   animate,
 } from "framer-motion";
 import {
-  Heart,
+  MessageSquare,
   Stars,
   Zap,
   ShieldCheck,
@@ -77,11 +77,11 @@ function Typewriter({ sentences }) {
 
   return (
     <div className="h-8 flex items-center justify-center">
-      <span className="text-rose-500 font-bold italic tracking-wide">{displayText}</span>
+      <span className="text-indigo-500 font-bold italic tracking-wide">{displayText}</span>
       <motion.span
         animate={{ opacity: [1, 0] }}
         transition={{ duration: 0.8, repeat: Infinity }}
-        className="w-[3px] h-6 bg-rose-500 ml-1 rounded-full"
+        className="w-[3px] h-6 bg-indigo-500 ml-1 rounded-full"
       />
     </div>
   );
@@ -119,8 +119,8 @@ function Footer({ isDark }) {
           <Link href="/refund-policy" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Refunds</Link>
           <Link href="/contact" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Contact</Link>
           <Link href="/support" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Support</Link>
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${isDark ? 'bg-white/5 border-white/5 text-rose-400' : 'bg-rose-50 border-rose-100 text-rose-500'}`}>
-            <Heart size={18} fill="currentColor" />
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${isDark ? 'bg-white/5 border-white/5 text-indigo-400' : 'bg-indigo-50 border-indigo-100 text-indigo-500'}`}>
+            <MessageSquare size={18} fill="currentColor" />
           </div>
         </div>
       </div>
@@ -162,7 +162,7 @@ export default function LandingPage() {
           setYesterdayRecord(recordData);
         } else {
           setYesterdayRecord({
-            names: "Sarah & Marcus",
+            names: "Alex & Jordan",
             duration: "2h 45m",
           });
         }
@@ -294,14 +294,14 @@ export default function LandingPage() {
         <div className="mb-12">
           <Typewriter
             sentences={[
-              "Where hearts find their sync... ❤️",
-              "Love in the moment, gone with the vibe... ✨😎",
-              "A pulse shared across the world... 🌎💖",
-              "Ephemeral chats, lasting memories... 🌹",
-              "Vibe with someone special right now... 💑",
-              "You are free to love, don't worry, just vibe... 🕊️❤️",
-              "Let your heart wander, then find its home... 🏠💕",
-              "No boundaries, just beautiful vibes... 🌊💖"
+              "Where minds find their sync... ✨",
+              "Connect in the moment, share the vibe... 😎",
+              "A pulse shared across the world... 🌎",
+              "Ephemeral chats, lasting ideas... ⚡",
+              "Vibe with someone interesting right now... 🤝",
+              "You are free to connect, don't worry, just vibe... 🕊️",
+              "Let your thoughts wander, then find a spark... 🏠",
+              "No boundaries, just beautiful syncs... 🌊"
             ]}
           />
         </div>
@@ -342,7 +342,7 @@ export default function LandingPage() {
 
           <div className={`rounded-[3.3rem] py-16 px-10 text-center relative overflow-hidden transition-colors duration-500 z-10 ${isDarkMode ? 'bg-[#111116]' : 'bg-white'}`}>
 
-            {/* Box-specific floating hearts - Fixed Full Coverage */}
+            {/* Box-specific floating icons - Fixed Full Coverage */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
               {[...Array(8)].map((_, i) => (
                 <motion.div
@@ -363,7 +363,7 @@ export default function LandingPage() {
                   }}
                   className="absolute"
                 >
-                  <Heart size={36} fill="currentColor" className={isDarkMode ? "text-rose-400/40" : "text-rose-500/30"} />
+                  <MessageSquare size={36} fill="currentColor" className={isDarkMode ? "text-indigo-400/40" : "text-indigo-500/30"} />
                 </motion.div>
               ))}
             </div>
@@ -439,7 +439,7 @@ export default function LandingPage() {
                 <Globe size={100} className="absolute -right-6 -bottom-6 opacity-10 group-hover:rotate-180 transition-transform duration-[3s]" />
                 <p className="text-[10px] uppercase font-black tracking-[0.3em] text-white/50 mb-2">Core Philosophy</p>
                 <p className="font-bold text-lg leading-snug tracking-tight">
-                  “Restoring the art of spontaneous, human conversation—one ephemeral chat at a time.”
+                  “Restoring the art of spontaneous, intellectual conversation—one ephemeral chat at a time.”
                 </p>
               </div>
             </div>

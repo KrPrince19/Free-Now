@@ -16,7 +16,7 @@ export default function RefundPolicyPage() {
             content: "FreeNow provides digital networking services and premium status upgrades (Elite Status). As these are intangible, digital products that are instantly delivered upon successful payment, they are generally non-refundable."
         },
         {
-            icon: <Clock size={24} className="text-rose-500" />,
+            icon: <Clock size={24} className="text-indigo-500" />,
             title: "Cancellation Policy",
             content: "Users may cancel their Elite subscription at any time through their profile settings. Once cancelled, you will continue to have access to premium features until the end of your current 30-day billing cycle. No further charges will be made."
         },
@@ -33,12 +33,12 @@ export default function RefundPolicyPage() {
     ];
 
     return (
-        <div className={`min-h-screen font-sans transition-colors duration-500 selection:bg-indigo-500/30 ${isDarkMode ? 'bg-[#0a0a0c] text-white' : 'bg-rose-50/30 text-slate-800'}`}>
+        <div className={`min-h-screen font-sans transition-colors duration-500 selection:bg-indigo-500/30 ${isDarkMode ? 'bg-[#0a0a0c] text-white' : 'bg-slate-50/30 text-slate-800'}`}>
             <Navbar />
 
             <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
                 <div className={`absolute top-[-10%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000 ${isDarkMode ? 'bg-indigo-500/10' : 'bg-indigo-500/5'}`} />
-                <div className={`absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000 ${isDarkMode ? 'bg-rose-500/10' : 'bg-rose-500/5'}`} />
+                <div className={`absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-all duration-1000 ${isDarkMode ? 'bg-indigo-500/10' : 'bg-indigo-500/5'}`} />
             </div>
 
             <main className="max-w-4xl mx-auto px-6 py-20 relative z-10">
@@ -50,7 +50,7 @@ export default function RefundPolicyPage() {
                     <Link href="/terms" className={`inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest mb-8 transition-colors ${isDarkMode ? 'text-white/40 hover:text-white' : 'text-slate-400 hover:text-slate-900'}`}>
                         <ArrowLeft size={16} /> Back to Terms
                     </Link>
-                    <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500 bg-clip-text text-transparent">
+                    <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 bg-clip-text text-transparent">
                         Refund Policy
                     </h1>
                     <p className={`text-lg font-medium max-w-2xl mx-auto ${isDarkMode ? 'text-white/40' : 'text-slate-500'}`}>
