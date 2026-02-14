@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { socket } from '../lib/socket';
 import Navbar from '../components/Navbar';
 import ChatBox from '../components/ChatBox';
+import PostChatAd from '../components/PostChatAd';
 import { useUser, useAuth } from "@clerk/nextjs";
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
@@ -50,6 +51,7 @@ export default function Dashboard() {
   const [timeLeft, setTimeLeft] = useState(15);
   const [statusToast, setStatusToast] = useState(null);
   const [showConnectionAnimation, setShowConnectionAnimation] = useState(false);
+  const [showPostChatAd, setShowPostChatAd] = useState(false);
   const { isDarkMode, updateVibeHue } = useTheme();
 
   const showToast = (msg, type = "info", isHeartbreak = false) => {
@@ -296,9 +298,18 @@ export default function Dashboard() {
           chatData={activeChat}
           currentUser={user?.username || user?.firstName}
           sessionId={sessionId}
-          onClose={() => { setActiveChat(null); localStorage.removeItem('activeChat'); }}
+          onClose={() => {
+            setActiveChat(null);
+            localStorage.removeItem('activeChat');
+            setShowPostChatAd(true);
+          }}
         />
       )}
+
+      <PostChatAd
+        isOpen={showPostChatAd}
+        onClose={() => setShowPostChatAd(false)}
+      />
 
       <div className="relative z-10">
         <Navbar />

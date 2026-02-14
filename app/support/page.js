@@ -14,7 +14,8 @@ import {
     Heart,
     Mail,
     User,
-    CheckCircle2
+    CheckCircle2,
+    MessageSquare
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
