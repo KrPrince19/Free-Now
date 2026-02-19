@@ -20,8 +20,7 @@ import {
   Activity,
   Sun,
   Moon,
-  Trophy,
-  Crown
+  Trophy
 } from "lucide-react";
 import { socket } from "../lib/socket";
 import { useTheme } from "../context/ThemeContext";
@@ -77,11 +76,11 @@ function Typewriter({ sentences }) {
 
   return (
     <div className="h-8 flex items-center justify-center">
-      <span className="text-indigo-500 font-bold italic tracking-wide">{displayText}</span>
+      <span className="text-rose-500 font-bold italic tracking-wide">{displayText}</span>
       <motion.span
         animate={{ opacity: [1, 0] }}
         transition={{ duration: 0.8, repeat: Infinity }}
-        className="w-[3px] h-6 bg-indigo-500 ml-1 rounded-full"
+        className="w-[3px] h-6 bg-rose-500 ml-1 rounded-full"
       />
     </div>
   );
@@ -116,7 +115,7 @@ function Footer({ isDark }) {
         <div className="flex flex-wrap items-center justify-center md:justify-end gap-x-8 gap-y-4">
           <Link href="/terms" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Terms</Link>
           <Link href="/privacy-policy" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Privacy</Link>
-          <Link href="/refund-policy" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Refunds</Link>
+
           <Link href="/contact" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Contact</Link>
           <Link href="/support" className={`text-xs font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Support</Link>
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${isDark ? 'bg-white/5 border-white/5 text-indigo-400' : 'bg-indigo-50 border-indigo-100 text-indigo-500'}`}>
@@ -536,7 +535,6 @@ export default function LandingPage() {
                             ? `${item.names.replace(" & ", " and ")} are chatting`
                             : `${item.name || "Someone"} is online`
                           }
-                          {item.isPremium && <Crown size={10} className="text-amber-400 fill-amber-400" />}
                         </div>
                         <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-indigo-600/90" />
                       </div>
@@ -544,7 +542,7 @@ export default function LandingPage() {
                       <motion.div
                         animate={isChat ? { scale: [1, 1.2, 1] } : {}}
                         transition={{ duration: 2, repeat: Infinity }}
-                        className={`w-3 h-3 -ml-1.5 -mt-1.5 rounded-full ${isChat ? 'bg-pink-500' : 'bg-pink-400/60'} ${item.isPremium ? 'bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.8)] border-2 border-white' : 'shadow-[0_0_15px_rgba(236,72,153,0.6)] border border-white/20'}`}
+                        className={`w-3 h-3 -ml-1.5 -mt-1.5 rounded-full ${isChat ? 'bg-pink-500' : 'bg-pink-400/60'} ${'shadow-[0_0_15px_rgba(236,72,153,0.6)] border border-white/20'}`}
                       >
                         <motion.div
                           animate={{ opacity: [0.3, 1, 0.3] }}

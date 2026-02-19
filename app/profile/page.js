@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, CheckCircle2,
   Sparkles, Coffee, BellRing, Clock, Zap, MessageSquare, ShieldCheck, XCircle,
-  Moon, Sun, Heart, Lock, Crown
+  Moon, Sun, Heart, Lock
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import LoadingScreen from '../components/LoadingScreen';
@@ -20,14 +20,14 @@ import Link from 'next/link';
 
 
 
-const PREMIUM_VIBES = [
-  { text: "Coffee & Code ☕", premium: false },
-  { text: "Just Chilling 🌊", premium: false },
-  { text: "Lofi Beats 🎧", premium: false },
-  { text: "VIP Lounge 👑", premium: true },
-  { text: "Zen Master 🧘", premium: true },
-  { text: "Midnight Marauder 🌙", premium: true },
-  { text: "Elite Vibing 🚀", premium: true },
+const RECOMMENDED_VIBES = [
+  { text: "Coffee & Code ☕" },
+  { text: "Just Chilling 🌊" },
+  { text: "Lofi Beats 🎧" },
+  { text: "VIP Lounge 👑" },
+  { text: "Zen Master 🧘" },
+  { text: "Midnight Marauder 🌙" },
+  { text: "Ultimate Vibing 🚀" },
 ];
 
 
@@ -61,8 +61,7 @@ export default function ProfilePage() {
   const [timeLeft, setTimeLeft] = useState(15);
   const [statusToast, setStatusToast] = useState(null);
   const [showConnectionAnimation, setShowConnectionAnimation] = useState(false);
-  const [gender, setGender] = useState("none"); // 🚻 GENDER STATE
-  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
 
   const showToast = (msg, type = "info") => {
     setStatusToast({ msg, type });
@@ -81,15 +80,14 @@ export default function ProfilePage() {
             body: JSON.stringify({
               sessionId,
               email: user.primaryEmailAddress?.emailAddress,
-              name: user.username || user.firstName,
-              gender: gender // 🚻 Include gender in sync
+              name: user.username || user.firstName
             })
           });
         } catch (err) { console.error("Sync Error:", err); }
       }
     };
     syncUser();
-  }, [isLoaded, user, sessionId, gender]); // 🚻 Re-sync when gender changes
+  }, [isLoaded, user, sessionId]);
 
   // --- 5. SOCKET LISTENERS & DATA FETCHING ---
   useEffect(() => {
@@ -117,7 +115,6 @@ export default function ProfilePage() {
           ]);
           const statsData = await statsRes.json();
           setStats(statsData);
-          if (statsData.gender) setGender(statsData.gender); // 🚻 Set initial gender
           setHistory(await historyRes.json());
           setInitialDataLoaded(true);
         } catch (err) { console.error("Fetch Error:", err); } finally { setIsRefreshing(false); }
@@ -131,9 +128,7 @@ export default function ProfilePage() {
 
       socket.on('request-expired', () => setIncomingRequest(null));
       socket.on('request-ignored', (data) => showToast(data.message, "info"));
-      // 💰 MONETIZATION: Notify user if registration or interaction attempts hit the daily ceiling
-      socket.on('request-failed', (data) => showToast(data.message, data.limitReached ? "error" : "error"));
-      // 🛡️ SECURITY & LIMITS: Catch global broadcast for reached tier limits
+      socket.on('request-failed', (data) => showToast(data.message, "error"));
       socket.on('limit-reached', (data) => showToast(data.message, "error"));
       socket.on('request-rejected', (data) => showToast(data.message, "error"));
       socket.on('chat-started', (data) => {
@@ -197,79 +192,7 @@ export default function ProfilePage() {
     setIncomingRequest(null);
   };
 
-  // 💰 RAZORPAY PAYMENT: Real checkout flow for Elite Status
-  const handleRazorpayPayment = async () => {
-    if (!user || !sessionId) return;
 
-    try {
-      showToast("Initializing secure checkout...", "info");
-
-      // 1. Create order on the backend
-      const orderRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/payment/create-order`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-
-      if (!orderRes.ok) throw new Error("Failed to create order");
-      const orderData = await orderRes.json();
-
-      // 2. Configure Razorpay Options
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_your_id",
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: "FreeNow Elite",
-        description: "Unlock Premium Features for 30 Days",
-        order_id: orderData.id,
-        handler: async (response) => {
-          // 3. Verify payment on the backend
-          showToast("Verifying payment...", "info");
-          const verifyRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/payment/verify`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              email: user.primaryEmailAddress?.emailAddress,
-              sessionId: sessionId
-            })
-          });
-
-          const verifyData = await verifyRes.json();
-          if (verifyData.success) {
-            showToast("Welcome to the Elite Club! 👑", "success");
-            // StatusContext handles real-time UI shift
-          } else {
-            showToast("Payment verification failed.", "error");
-          }
-        },
-        prefill: {
-          name: user.username || user.firstName,
-          email: user.primaryEmailAddress?.emailAddress,
-        },
-        theme: { color: "#6366f1" }
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      console.error("Razorpay Error:", err);
-      showToast("Checkout failed. Try again later.", "error");
-    }
-  };
-
-  // 💰 LOAD RAZORPAY SDK
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => setRazorpayLoaded(true);
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
 
 
 
@@ -416,50 +339,12 @@ export default function ProfilePage() {
           </div>
           <h1 className={`text-4xl font-black tracking-tight mb-2 relative z-10 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
             {user?.username || user?.firstName}
-            {(usage.isPremium && usage.globalConfig?.eliteEnabled) && <Crown className="inline-block ml-3 text-amber-400 fill-amber-400" size={24} />}
           </h1>
           <p className={`font-medium text-sm tracking-wide mb-6 relative z-10 ${isDarkMode ? 'text-white/40' : 'text-slate-400'}`}>
-            {(usage.isPremium && usage.globalConfig?.eliteEnabled) ? '👑 Premium Member' : `@${user?.username || user?.firstName}`}
+            @{user?.username || user?.firstName}
           </p>
 
-          {(usage.isPremium && usage.globalConfig?.eliteEnabled) && usage.premiumUntil && (
-            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className={`mb-6 p-3 rounded-2xl border flex items-center justify-center gap-2 mx-auto w-fit ${isDarkMode ? 'bg-amber-500/5 border-amber-500/20 text-amber-500/80' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
-              <Clock size={14} />
-              <p className="text-[10px] font-black uppercase tracking-widest">
-                Elite status valid until: {new Date(usage.premiumUntil).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
-              </p>
-            </motion.div>
-          )}
 
-          {/* 🚻 GENDER SELECTION UI (Elite Only Identity) */}
-          <div className="flex justify-center items-center gap-2 mb-8">
-            <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>Identity:</span>
-            <div className={`p-1 rounded-2xl flex gap-1 ${isDarkMode ? 'bg-white/5' : 'bg-rose-50'}`}>
-              {['male', 'female', 'none'].map((g) => {
-                const isPremiumOption = g !== 'none';
-                const isLocked = isPremiumOption && (!usage.isPremium || !usage.globalConfig?.eliteEnabled);
-                const isSelected = gender === g;
-
-                return (
-                  <button
-                    key={g}
-                    onClick={() => {
-                      if (isLocked) return showToast("Identity disclosure is an Elite 💎 perk!", "error");
-                      setGender(g);
-                    }}
-                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${isSelected
-                      ? 'bg-indigo-500 text-white shadow-lg'
-                      : isDarkMode ? 'text-white/30 hover:text-white/60' : 'text-slate-400 hover:text-slate-600'
-                      } ${isLocked ? 'opacity-60' : ''}`}
-                  >
-                    {g === 'none' ? 'Hidden' : g}
-                    {isLocked && <Lock size={10} />}
-                    {isSelected && !isLocked && g !== 'none' && <Sparkles size={10} className="text-indigo-200" />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
           <div className="flex justify-center gap-3">
             <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-white/5 border-white/10 text-indigo-400' : 'bg-indigo-50 border-indigo-100 text-indigo-600'}`}>
@@ -469,27 +354,6 @@ export default function ProfilePage() {
               {isFree ? "Live Now" : "Invisible"}
             </div>
           </div>
-
-          {/* 💎 ELITE UPGRADE: Re-positioned for better visibility & responsiveness */}
-          {(!usage.isPremium && usage.globalConfig?.eliteEnabled) && (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleRazorpayPayment}
-              className={`mt-8 w-full sm:w-auto relative px-8 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all shadow-xl overflow-hidden group/elite ${isDarkMode
-                ? 'bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 text-black'
-                : 'bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 text-white'
-                }`}
-            >
-              <span className="relative z-10 flex items-center justify-center gap-3">
-                <Crown size={16} className={isDarkMode ? "" : "fill-white"} />
-                Join the Elite Club
-              </span>
-              <div className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover/elite:translate-x-[100%] transition-transform duration-700 skew-x-[-20deg]" />
-              {/* Pulsing Outer Glow */}
-              <div className="absolute inset-0 rounded-[1.5rem] shadow-[0_0_20px_rgba(251,191,36,0.5)] animate-pulse" />
-            </motion.button>
-          )}
         </section>
 
         {/* --- AVAILABILITY INTERFACE --- */}
@@ -499,22 +363,14 @@ export default function ProfilePage() {
               <div>
                 <h2 className={`text-xl font-bold flex items-center gap-2 tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Vibe Presence <Sparkles size={18} className="text-indigo-400" /></h2>
                 <p className={`text-sm mt-1 ${isDarkMode ? 'text-white/30' : 'text-slate-400 italic'}`}>{isFree ? "Broadcasting to the network" : "Your profile is currently hidden"}</p>
-                {/* 🛡️ USAGE LIMITS: Display remaining daily allowance or Premium status */}
-                {(usage.isPremium && usage.globalConfig?.eliteEnabled) ? (
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 w-fit mt-2">
-                    <div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
-                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Unlimited Vibe (Premium)</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-0.5 mt-2">
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-indigo-400/60' : 'text-indigo-600/60'}`}>
-                      Vibe Pings Left: {Math.max(0, (usage.globalConfig?.pingLimit || 5) - (usage.requestsToday || 0))}
-                    </p>
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-rose-400/60' : 'text-rose-600/60'}`}>
-                      Visibility Toggles Left: {Math.max(0, (usage.globalConfig?.toggleLimit || 3) - (usage.goFreeToday || 0))}
-                    </p>
-                  </div>
-                )}
+                <div className="flex flex-col gap-0.5 mt-2">
+                  <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-indigo-400/60' : 'text-indigo-600/60'}`}>
+                    Vibe Pings Left: {Math.max(0, (usage.globalConfig?.pingLimit || 5) - (usage.requestsToday || 0))}
+                  </p>
+                  <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-rose-400/60' : 'text-rose-600/60'}`}>
+                    Visibility Toggles Left: {Math.max(0, (usage.globalConfig?.toggleLimit || 3) - (usage.goFreeToday || 0))}
+                  </p>
+                </div>
               </div>
 
               <button
@@ -538,13 +394,11 @@ export default function ProfilePage() {
               <Coffee className={`absolute right-6 top-5 transition-colors ${isFree ? 'text-indigo-400' : 'text-slate-300'}`} size={24} />
             </div>
 
-            {/* 💎 PREMIUM: Exclusive Vibe Suggestions */}
             <div className="flex flex-wrap gap-2">
-              {PREMIUM_VIBES.map((vibe, idx) => (
+              {RECOMMENDED_VIBES.map((vibe, idx) => (
                 <button
                   key={idx}
                   onClick={() => {
-                    if (vibe.premium && !usage.isPremium) return showToast("Premium vibes are for 💎 Elite members!", "error");
                     if (!isFree) setStatusText(vibe.text);
                   }}
                   className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${statusText === vibe.text
@@ -552,11 +406,9 @@ export default function ProfilePage() {
                     : isDarkMode
                       ? 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'
                       : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'
-                    } ${(vibe.premium && usage.globalConfig?.eliteEnabled) && !usage.isPremium ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    }`}
                 >
                   {vibe.text}
-                  {(vibe.premium && usage.globalConfig?.eliteEnabled) && !usage.isPremium && <Lock size={10} />}
-                  {(vibe.premium && usage.globalConfig?.eliteEnabled) && usage.isPremium && <Crown size={10} className="text-amber-400 fill-amber-400" />}
                 </button>
               ))}
             </div>
@@ -653,7 +505,7 @@ export default function ProfilePage() {
           <div className="flex flex-wrap justify-center gap-6 mb-8">
             <Link href="/terms" className={`text-[10px] font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>Terms</Link>
             <Link href="/privacy-policy" className={`text-[10px] font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>Privacy</Link>
-            <Link href="/refund-policy" className={`text-[10px] font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>Refunds</Link>
+
             <Link href="/contact" className={`text-[10px] font-black uppercase tracking-widest hover:text-indigo-500 transition-colors ${isDarkMode ? 'text-white/20' : 'text-slate-400'}`}>Contact</Link>
           </div>
           <p className={`text-[10px] font-black uppercase tracking-[0.4em] ${isDarkMode ? 'text-white/20' : 'text-slate-300'}`}>

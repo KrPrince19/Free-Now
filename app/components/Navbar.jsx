@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { useStatus } from '../context/StatusContext';
-import { Crown } from 'lucide-react';
+// Crown import removed
 
 const Navbar = () => {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -26,7 +26,6 @@ const Navbar = () => {
             <span className="text-white font-black text-xl italic">F</span>
           </div>
           <h1 className={`text-xl font-bold tracking-tight leading-none ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>FreeNow</h1>
-          {(usage.isPremium && usage.globalConfig?.eliteEnabled) && <Crown size={14} className="text-amber-400 fill-amber-400 -mt-1" />}
         </Link>
 
         {/* Navigation Actions */}
@@ -73,15 +72,6 @@ const Navbar = () => {
                 }`} title="Profile">
                 <div className={`w-8 h-8 bg-gradient-to-tr from-rose-400 to-indigo-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center relative`}>
                   <User size={16} className="text-white" />
-                  {(usage.isPremium && usage.globalConfig?.eliteEnabled) && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm"
-                    >
-                      <Crown size={8} className="text-amber-500 fill-amber-500" />
-                    </motion.div>
-                  )}
                 </div>
               </button>
             </Link>

@@ -57,12 +57,9 @@ export default function TermsPage() {
         },
         {
             q: "Are there usage quotas on the platform?",
-            a: "To maintain optimal service performance and prevent system overflow, daily usage limits are applied to standard accounts. These quotas (5 chat requests and 3 status updates) are reset daily at 00:00 IST."
+            a: "To maintain optimal service performance and prevent system overflow, daily usage limits are applied to all accounts. These quotas (5 chat requests and 3 status updates) are reset daily at 00:00 IST."
         },
-        {
-            q: "How can I access unlimited service features?",
-            a: "Users may upgrade to an 'Elite Status' account via our secure payment gateway. Elite Status removes daily usage quotas, provides priority networking access, and unlocks premium interface enhancements. These are digital' content services delivered instantly upon purchase."
-        },
+
         {
             q: "Is my personal data protected?",
             a: "Yes. We maintain a 'Privacy by Design' architecture. Administrative access is restricted to account metadata and status management only. Private communications and ephemeral media are never logged or accessible by platform staff."
@@ -119,7 +116,7 @@ export default function TermsPage() {
 
                 <div className="mt-12 flex flex-wrap justify-center gap-4">
                     <Link href="/privacy-policy" className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-slate-200 hover:bg-slate-50'}`}>Privacy Policy</Link>
-                    <Link href="/refund-policy" className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-slate-200 hover:bg-slate-50'}`}>Refund Policy</Link>
+
                     <Link href="/contact" className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border transition-all ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-slate-200 hover:bg-slate-50'}`}>Contact Us</Link>
                 </div>
 

@@ -24,9 +24,7 @@ export const StatusProvider = ({ children }) => {
   const [usage, setUsage] = useState({
     requestsToday: 0,
     goFreeToday: 0,
-    isPremium: false,
     globalConfig: {
-      eliteEnabled: true,
       pingLimit: 5,
       toggleLimit: 3
     }
@@ -43,30 +41,11 @@ export const StatusProvider = ({ children }) => {
         });
       }
 
-      // 💰 MONETIZATION: Listen for real-time usage updates from the server
       const handleUsageUpdate = (data) => {
         console.log("📊 [FRONTEND] Received usage update:", data);
         setUsage(data);
       };
-
-      // Explicitly ask for latest stats on mount
       socket.emit("usage-refresh", sessionId);
-
-      // 💎 PREMIUM SYNC: Listen for admin-triggered premium status changes
-      const handlePremiumToggle = (data) => {
-        console.log("💎 [FRONTEND] admin-premium-toggle received:", data);
-        const currentUserEmail = user?.primaryEmailAddress?.emailAddress;
-        if (data.email === currentUserEmail) {
-          console.log(`✅ [FRONTEND] Matching email ${currentUserEmail}! Updating premium to ${data.isPremium}`);
-          setUsage(prev => ({
-            ...prev,
-            isPremium: data.isPremium,
-            premiumUntil: data.premiumUntil || null
-          }));
-        } else {
-          console.log(`ℹ️ [FRONTEND] Email mismatch: ${data.email} vs ${currentUserEmail}`);
-        }
-      };
 
       // ♻️ USAGE SYNC: Listen for admin-triggered usage resets
       const handleUsageReset = (data) => {
@@ -82,7 +61,6 @@ export const StatusProvider = ({ children }) => {
         setUsage(prev => ({
           ...prev,
           globalConfig: {
-            eliteEnabled: data.eliteEnabled,
             pingLimit: data.pingLimit,
             toggleLimit: data.toggleLimit
           }
@@ -90,15 +68,10 @@ export const StatusProvider = ({ children }) => {
       };
 
       socket.on("usage-update", handleUsageUpdate);
-      socket.on("admin-premium-toggle", handlePremiumToggle);
       socket.on("admin-usage-reset", handleUsageReset);
       socket.on("config-update", handleConfigUpdate);
 
-      // 🌐 GLOBAL PREMIUM TRIGGER: Force a refresh when admin upgrades everyone
-      socket.on("admin-premium-all-trigger", () => {
-        console.log("🌐 [FRONTEND] Global premium trigger received! Refreshing...");
-        socket.emit("usage-refresh", sessionId);
-      });
+      // Section removed
 
       // 🕛 MIDNIGHT RESET TRIGGER: Force a refresh when daily limits reset
       socket.on("midnight-vibe-reset", () => {
@@ -109,10 +82,8 @@ export const StatusProvider = ({ children }) => {
       return () => {
         console.log("🧹 [FRONTEND] Cleaning up StatusContext listeners");
         socket.off("usage-update", handleUsageUpdate);
-        socket.off("admin-premium-toggle", handlePremiumToggle);
         socket.off("admin-usage-reset", handleUsageReset);
         socket.off("config-update", handleConfigUpdate);
-        socket.off("admin-premium-all-trigger");
         socket.off("midnight-vibe-reset");
       };
     }

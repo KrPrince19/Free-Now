@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
         {
             icon: <Database size={24} className="text-indigo-500" />,
             title: "Data Collection",
-            content: "We collect minimal information required to provide our networking services: your email address, name, and temporary session identifiers. We do not collect or store sensitive personal information like biometrics, precise location, or financial data outside of secure payment processing."
+            content: "We collect minimal information required to provide our networking services: your email address, name, and temporary session identifiers. We do not collect or store sensitive personal information like biometrics or precise location data."
         },
         {
             icon: <Eye size={24} className="text-indigo-500" />,

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '../lib/socket';
-import { Send, X, ShieldCheck, Clock, Smile, Sparkles, Heart, Zap, User, Edit2, Trash2, Copy, Check, Camera, Eye, AlertCircle, Activity, Pencil, RotateCcw, Plus, Download, Crown } from 'lucide-react';
+import { Send, X, ShieldCheck, Clock, Smile, Sparkles, Heart, Zap, User, Edit2, Trash2, Copy, Check, Camera, Eye, AlertCircle, Activity, Pencil, RotateCcw, Plus, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStatus } from '../context/StatusContext';
 
@@ -37,7 +37,7 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   const [message, setMessage] = useState("");
   const [viewingImageId, setViewingImageId] = useState(null);
   const [imageTimers, setImageTimers] = useState({});
-  const [keptSnapshots, setKeptSnapshots] = useState([]); // 💎 PREMIUM: Local session vault
+  // Snapshot vault removed
   const [messages, setMessages] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(`chat_messages_${chatData.roomId}`);
@@ -150,6 +150,20 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
     socket.on('partner-left', (data) => {
       setPartnerDetails(prev => ({ ...prev, left: true }));
       setMessages(prev => [...prev, { system: true, text: `${data.senderName || "Your partner"} has left the vibe session.` }]);
+
+      // 💰 AUTOMATIC AD TRANSITION: If partner leaves, trigger parent onClose after 5 seconds
+      // This gives the user time to see the "Session Ended" message
+      setTimeout(() => {
+        onClose();
+      }, 5000);
+    });
+
+    socket.on('session-ended', () => {
+      setPartnerDetails(prev => ({ ...prev, left: true }));
+      // Also trigger onClose from here to be absolutely safe
+      setTimeout(() => {
+        onClose();
+      }, 5000);
     });
     socket.on('message-updated', ({ messageId, newText }) => {
       setMessages((prev) => prev.map(m => m.id === messageId ? { ...m, text: newText, edited: true } : m));
@@ -227,6 +241,7 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
       socket.off('partner-typing');
       socket.off('partner-stop-typing');
       socket.off('partner-left');
+      socket.off('session-ended');
       socket.off('message-updated');
       socket.off('message-deleted');
       socket.off('vibe-game-status');
@@ -345,8 +360,8 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
     if (imageTimers[msgId]) return;
     setViewingImageId(msgId);
 
-    // 💎 PREMIUM: Extended timer (30s) for premium accounts, 10s for regular
-    const duration = usage.isPremium ? 30 : 10;
+    // Standard 10s timer for everyone
+    const duration = 10;
     setImageTimers(prev => ({ ...prev, [msgId]: duration }));
 
     const timer = setInterval(() => {
@@ -357,9 +372,6 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
         const next = currentVal - 1;
         if (next <= 0) {
           clearInterval(timer);
-          // 💎 PREMIUM: If the image was "Kept", don't expire it from view
-          if (keptSnapshots.includes(msgId)) return { ...prev, [msgId]: 0 };
-
           setViewingImageId(null);
           setMessages(mPrev => mPrev.map((m) => (m.clientId || m.id) === msgId ? { ...m, expired: true, text: "Snapshot Expired" } : m));
           return { ...prev, [msgId]: 0 };
@@ -369,11 +381,7 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
     }, 1000);
   };
 
-  const keepSnapshot = (msgId) => {
-    if (!usage.isPremium) return alert("Upgrade to Premium to keep snapshots!");
-    setKeptSnapshots(prev => [...prev, msgId]);
-    // Optionally also save to a persistent "Vault" collection if needed in future
-  };
+  // Snapshot vault logic removed
 
   const handleSpark = () => {
     setIsSparking(true);
@@ -397,9 +405,11 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
   };
 
   const handleClose = () => {
+    console.log("🛑 [CHAT:EXIT] Manual Close Initiated");
     socket.emit('end-chat', { roomId: chatData.roomId, senderName: currentUser });
     localStorage.removeItem(`chat_messages_${chatData.roomId}`);
-    setIsMobileMenuOpen(false); onClose();
+    setIsMobileMenuOpen(false);
+    onClose();
   };
 
   const toggleVibeGame = () => socket.emit('vibe-game-toggle', { roomId: chatData.roomId, isOpen: !isGameOpen });
@@ -484,6 +494,28 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
       </header>
 
       <div className="flex-1 overflow-y-auto px-6 md:px-12 py-10 space-y-8 relative">
+        {partnerDetails.left && (
+          <motion.div
+            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            animate={{ opacity: 1, backdropFilter: "blur(12px)" }}
+            className="absolute inset-0 z-[150] flex flex-col items-center justify-center bg-white/20 text-center px-8"
+          >
+            <div className="w-20 h-20 bg-rose-500 rounded-3xl flex items-center justify-center mb-6 shadow-2xl shadow-rose-500/20 animate-bounce">
+              <Zap size={40} className="text-white" />
+            </div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tighter mb-2">Vibe Session Ended</h2>
+            <p className="text-slate-500 font-bold text-sm uppercase tracking-widest mb-6">Redirecting to home screen...</p>
+            <div className="w-48 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: "100%" }}
+                animate={{ width: "0%" }}
+                transition={{ duration: 5, ease: "linear" }}
+                className="h-full bg-rose-500"
+              />
+            </div>
+          </motion.div>
+        )}
+
         {messages.length === 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="absolute inset-0 flex flex-col items-center justify-center text-center opacity-40 px-6">
             <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-indigo-50 to-rose-50 rounded-[1.8rem] md:rounded-[2.5rem] flex items-center justify-center mb-6 border border-white/50"><Zap className="text-indigo-400 w-8 h-8 md:w-10 md:h-10" /></div>
@@ -588,21 +620,11 @@ export default function ChatBox({ chatData, currentUser, sessionId, onClose }) {
                 <span className="text-white font-bold text-sm">Self-destructing in {imageTimers[viewingImageId]}s</span>
               </div>
               <div className="flex gap-4 w-full">
-                {/* 💎 PREMIUM: Keep Snapshot button */}
-                {usage.isPremium && !keptSnapshots.includes(viewingImageId) && (
-                  <button
-                    onClick={() => keepSnapshot(viewingImageId)}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl shadow-indigo-600/20"
-                  >
-                    <Download size={18} />
-                    Keep to Vault
-                  </button>
-                )}
                 <button
                   onClick={() => setViewingImageId(null)}
-                  className={`${usage.isPremium && !keptSnapshots.includes(viewingImageId) ? 'flex-1' : 'w-full'} bg-white/10 hover:bg-white/20 text-white font-black py-4 rounded-2xl transition-all border border-white/10`}
+                  className="w-full bg-white/10 hover:bg-white/20 text-white font-black py-4 rounded-2xl transition-all border border-white/10"
                 >
-                  {keptSnapshots.includes(viewingImageId) ? "Close Vault View" : "Close Snapshot"}
+                  Close Snapshot
                 </button>
               </div>
             </div>

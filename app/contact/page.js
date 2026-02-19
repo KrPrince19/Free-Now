@@ -143,7 +143,7 @@ export default function ContactPage() {
                                     >
                                         <option>General Inquiry</option>
                                         <option>Technical Support</option>
-                                        <option>Billing / Payment Issue</option>
+
                                         <option>Business Cooperation</option>
                                     </select>
                                 </div>
